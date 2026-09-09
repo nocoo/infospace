@@ -35,6 +35,7 @@ extension InspectionSession {
                 to: CGPoint(x: current.gridFrame.width * 18.2 / 32, y: divider.frame.midY),
                 in: window, model: model)
             checks["native-protected-span-drag"] = trace.isContinuous && model.grid.columns.dividers == [18]
+            diagnostics["protected-span-drag-trace"] = trace.summary
         } else {
             checks["native-protected-span-drag"] = false
         }

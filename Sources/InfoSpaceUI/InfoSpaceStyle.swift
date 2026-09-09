@@ -91,6 +91,9 @@ public struct SpacePanelStyle {
     public var controlSide: CGFloat = 26
     public var controlCornerRadius: CGFloat = 6
     public var controlSpacing: CGFloat = 3
+    /// When supplied, the host owns control backgrounds and interaction feedback.
+    /// The SDK does not add another background beneath the host's button style.
+    public var controlButtonStyle: SpaceControlButtonStyle?
     public var headerSpacing: CGFloat = 9
     public var headerHorizontalPadding: CGFloat = 16
     public var compactHeaderHorizontalPadding: CGFloat = 8

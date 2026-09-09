@@ -20,6 +20,7 @@ struct CustomizedWorkspaceExample: View {
         style.panel.actionFont = .system(size: 16)
         style.panel.controlSide = 40
         style.panel.controlSpacing = 4
+        style.panel.controlButtonStyle = SpaceControlButtonStyle(ExampleControlStyle())
         style.panel.contentHeaderOverlap = 0
         return style
     }
@@ -125,5 +126,25 @@ private struct ExampleEditor: View {
         TextField("Notes", text: $text, axis: .vertical)
             .textFieldStyle(.plain)
             .accessibilityLabel("Notes for \(space.rawValue)")
+    }
+}
+
+private struct ExampleControlStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hovered = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.primary)
+            .background(
+                isEnabled && (hovered || configuration.isPressed) ? Color.teal.opacity(0.15) : .clear,
+                in: .rect(cornerRadius: 8)
+            )
+            .contentShape(.rect(cornerRadius: 8))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+            .onHover { hovered = $0 }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: hovered)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }

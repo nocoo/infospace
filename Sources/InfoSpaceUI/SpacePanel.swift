@@ -21,7 +21,13 @@ struct SpacePanel<Content: View>: View {
     private var showsContent: Bool {
         !isBanner && size.width >= style.minimumContentSize.width && size.height >= style.minimumContentSize.height
     }
-    private var usesCompactMenu: Bool { size.width < 130 || size.height < 40 }
+    private var usesCompactMenu: Bool {
+        let count: CGFloat = actions.isEmpty ? 2 : 3
+        let controlsWidth =
+            style.headerHorizontalPadding * 2 + style.controlSide * count
+            + style.controlSpacing * (count - 1) + style.headerSpacing + 22
+        return size.width < max(130, controlsWidth) || size.height < max(40, style.controlSide + 4)
+    }
     private var showsInlineActions: Bool { size.width >= style.inlineActionsMinimumWidth(count: actions.count) }
 
     var body: some View {
@@ -130,7 +136,8 @@ struct SpacePanel<Content: View>: View {
             } label: {
                 actionIcon("ellipsis")
             }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .menuStyle(.button).menuIndicator(.hidden).fixedSize()
+            .modifier(SpaceControlAppearance(style: style.controlButtonStyle))
             .accessibilityLabel("Additional actions for \(appearance.title)")
         }
     }
@@ -142,12 +149,16 @@ struct SpacePanel<Content: View>: View {
             builtInMenuActions
         } label: {
             Image(systemName: "ellipsis").font(style.actionFont)
-                .frame(width: max(22, style.controlSide - 4), height: min(style.controlSide, max(16, size.height - 4)))
-                .background(
-                    appearance.controlBackground ?? appearance.foregroundColor.opacity(0.1),
-                    in: RoundedRectangle(cornerRadius: style.controlCornerRadius))
+                .frame(width: style.controlSide, height: min(style.controlSide, max(16, size.height - 4)))
+                .background {
+                    if style.controlButtonStyle == nil {
+                        RoundedRectangle(cornerRadius: style.controlCornerRadius)
+                            .fill(appearance.controlBackground ?? appearance.foregroundColor.opacity(0.1))
+                    }
+                }
         }
-        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .menuStyle(.button).menuIndicator(.hidden).fixedSize()
+        .modifier(SpaceControlAppearance(style: style.controlButtonStyle))
         .accessibilityLabel("Actions for \(appearance.title)")
     }
 
@@ -180,10 +191,13 @@ struct SpacePanel<Content: View>: View {
     private func actionIcon(_ symbol: String) -> some View {
         Image(systemName: symbol).font(style.actionFont)
             .frame(width: style.controlSide, height: style.controlSide)
-            .background(
-                appearance.controlBackground ?? appearance.foregroundColor.opacity(hovered ? 0.14 : 0.075),
-                in: RoundedRectangle(cornerRadius: style.controlCornerRadius)
-            )
+            .background {
+                if style.controlButtonStyle == nil {
+                    RoundedRectangle(cornerRadius: style.controlCornerRadius)
+                        .fill(
+                            appearance.controlBackground ?? appearance.foregroundColor.opacity(hovered ? 0.14 : 0.075))
+                }
+            }
             .contentShape(.rect)
     }
 
@@ -192,7 +206,9 @@ struct SpacePanel<Content: View>: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(role: role, action: action) { actionIcon(symbol) }
-            .buttonStyle(.plain).help(title).accessibilityLabel(title)
+            .modifier(SpaceControlAppearance(style: style.controlButtonStyle)).help(title).accessibilityLabel(
+                title
+            )
             .accessibilityIdentifier("\(id)-\(space.id)")
     }
 }

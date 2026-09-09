@@ -55,12 +55,14 @@ extension InspectionSession {
     func drag(
         from: CGPoint, to destination: CGPoint, in window: NSWindow, model: InfoSpaceModel
     ) async -> DragTrace {
-        await activate(window)
-        let trace = DragTrace(grid: model.grid)
+        let activated = await activate(window)
+        let trace = DragTrace(grid: model.grid, window: window)
+        guard activated else { return trace }
         // Inspect the previous event's live preview before the next event (including mouse-up) is handled.
-        let monitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDragged, .leftMouseUp]) { event in
+        let mask: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseDragged, .leftMouseUp]
+        let monitor = NSEvent.addLocalMonitorForEvents(matching: mask) { event in
             MainActor.assumeIsolated {
-                if event.window === window { trace.sample(model) }
+                if event.window === window { trace.observe(event, window: window, model: model) }
             }
             return event
         }
@@ -83,6 +85,7 @@ extension InspectionSession {
         }
         post(.leftMouseUp, at: point(destination), in: window)
         await settle(350)
+        trace.observeWindow(window)
         return trace
     }
 
@@ -92,10 +95,35 @@ extension InspectionSession {
         return view.convert(local, to: nil)
     }
 
-    func activate(_ window: NSWindow) async {
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        await settle(80)
+    @discardableResult
+    func activate(_ window: NSWindow) async -> Bool {
+        func ready() -> Bool {
+            NSApp.isActive && window.isKeyWindow && window.isVisible
+                && window.isOnActiveSpace && window.occlusionState.contains(.visible)
+        }
+        if ready() {
+            checks["native-input-has-foreground"] = checks["native-input-has-foreground"] ?? true
+            return true
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        // Activating the application can restore its previous key window.
+        // Wait for activation before making the inspection window key.
+        if !NSApp.isActive {
+            NSApp.activate(ignoringOtherApps: true)
+            while !NSApp.isActive, ContinuousClock.now < deadline, !Task.isCancelled { await settle(50) }
+        }
+        if NSApp.isActive, !Task.isCancelled {
+            window.makeKeyAndOrderFront(nil)
+            while !ready(), ContinuousClock.now < deadline, !Task.isCancelled { await settle(50) }
+        }
+        let activated = ready() && !Task.isCancelled
+        checks["native-input-has-foreground"] = checks["native-input-has-foreground", default: true] && activated
+        if !activated {
+            diagnostics["activation-failure"] =
+                "active=\(NSApp.isActive), key=\(window.isKeyWindow), visible=\(window.isVisible), "
+                + "active-space=\(window.isOnActiveSpace), unoccluded=\(window.occlusionState.contains(.visible))"
+        }
+        return activated
     }
 
     func post(_ type: NSEvent.EventType, at point: CGPoint, in window: NSWindow) {

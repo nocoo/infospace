@@ -120,6 +120,8 @@ Pass an `actions: (SpaceID) -> [SpaceAction]` closure to the canvas or workspace
 
 Hosts can map their design tokens into `SpacePanelStyle.titleFont`, `bannerTitleFont`, `symbolFont`, `bannerSymbolFont` and `actionFont`. Pass fonts already resolved for the host's reading size; the SDK does not own a second appearance preference. `controlSide`, `controlCornerRadius`, `controlSpacing`, `headerSpacing` and the three horizontal padding fields control chrome geometry. Set `headerHeight` to fit the largest font/control, and `contentHeaderOverlap = 0` when content must begin strictly below the header. Enlarging `controlSide` also increases the width required for inline custom actions, so controls move into the existing overflow menu sooner. Very small panels still use compact actions and banners; they do not force the panel wider than its grid track. See the compiled `CustomizedWorkspaceExample` for a 40 pt control configuration.
 
+Set `style.panel.controlButtonStyle = SpaceControlButtonStyle(MyButtonStyle())` to reuse a host's standard hover, press, selection and disabled feedback on built-in actions, custom actions and overflow menus. The supplied SwiftUI `ButtonStyle` receives the original configuration and inherited environment, including enabled state and Reduce Motion. It owns the control background; the SDK does not paint a second fill beneath it. Keep sizing in `SpacePanelStyle` so overflow decisions use the actual hit targets. A nil override keeps the SDK's default appearance. The SDK still owns actions, roles, identifiers and keyboard/accessibility behavior; this hook does not replace business commands.
+
 The canvas also accepts custom builders:
 
 | Builder | Context |
