@@ -69,13 +69,44 @@ extension InspectionSession {
                     model: sample, style: dockStyle,
                     options: .init(allowsCollapse: false, showsPresets: false)
                 )
-                .controlSize(.large))
+                .controlSize(.large)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("host-layout-controls"))
         await settle(200)
         let dock = probe.views.compactMap(\.view).filter { $0.window === hosted }
         checks["layout-controls-use-host-size-and-feedback"] =
             dock.count == 7
             && dock.allSatisfy { $0.bounds.size == CGSize(width: 40, height: 40) && $0.largeControls }
         checks["layout-controls-keep-boundary-actions-disabled"] = dock.filter { !$0.enabled }.count == 3
+        let identifiers = accessibleIdentifiers(in: hosted)
+        let expected = [
+            "increase-rows", "decrease-rows", "increase-columns", "decrease-columns",
+            "balance", "toggle-grid", "restore-all",
+        ]
+        checks["layout-controls-retain-accessibility-identifiers"] = expected.allSatisfy(identifiers.contains)
+    }
+
+    private func accessibleIdentifiers(in window: NSWindow) -> Set<String> {
+        var pending: [AnyObject] = [window]
+        var visited: Set<ObjectIdentifier> = []
+        var identifiers: Set<String> = []
+        while let element = pending.popLast(), visited.count < 5_000 {
+            guard visited.insert(ObjectIdentifier(element)).inserted else { continue }
+            if let view = element as? NSView { pending.append(contentsOf: view.subviews) }
+            guard let object = element as? NSObject else { continue }
+            func attribute(_ name: String) -> Any? {
+                let selector = NSSelectorFromString(name)
+                guard object.responds(to: selector) else { return nil }
+                return object.perform(selector)?.takeUnretainedValue()
+            }
+            if let value = attribute("accessibilityIdentifier") as? String {
+                identifiers.insert(value)
+            }
+            if let values = attribute("accessibilityChildren") as? [AnyObject] {
+                pending.append(contentsOf: values)
+            }
+        }
+        return identifiers
     }
 
     private func controlStyleCanvas(model: InfoSpaceModel, probe: ControlStyleProbe) -> some View {

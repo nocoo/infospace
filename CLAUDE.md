@@ -45,3 +45,17 @@ Release build. scripts/build.sh -quiet passed. The dedicated native run passed
 editor retention and styled native layout controls. Its 64-panel geometry-only
 projection averaged 123.3 microseconds; this is not a rendering FPS measurement.
 Private evidence is retained under .local/warp-surface/sdk-native-1.
+
+The layout-controls group and dimension groups are explicit accessibility
+containers. An enclosing host group that has an identifier must also contain
+its children; otherwise SwiftUI can propagate that identifier into all buttons.
+The native control-style inspection verifies all seven real action identifiers.
+
+This accessibility increment passed scripts/check.sh (58 tests, examples and
+Release), the Debug build, and the added identifier/control-style assertions in
+both native attempts. The complete native runs were 56/57 and 55/57: foreground
+loss invalidated a drag in each, and the second also had one ScreenCaptureKit
+capture failure. Frames remained fixed and drag previews/commits were correct.
+Keep both failed reports under .local/warp-surface/sdk-accessibility-native-{1,2};
+do not describe those complete runs as passed. No drag or geometry code changed
+in this increment; consumer-mounted dragging is validated separately.

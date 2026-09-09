@@ -155,6 +155,11 @@ Buttons keep stable accessibility identifiers such as `increase-rows`,
 are `infospace-layout-rows` and `infospace-layout-columns`. These controls may
 live in any workspace region; placement is a host concern.
 
+The groups are explicit accessibility containers, preserving each button's own
+identifier and label. Hosts that identify an enclosing SwiftUI group should also
+use `.accessibilityElement(children: .contain)` before assigning its identifier;
+an ungrouped ancestor identifier can otherwise propagate into every child.
+
 ### Host localization
 
 Apply `.infoSpaceLocalization(InfoSpaceLocalization { text in ... })` to a common

@@ -37,6 +37,7 @@ public struct InfoSpaceLayoutControls: View {
         .buttonStyle(.plain)
         .foregroundStyle(style.theme.foreground)
         .fixedSize(horizontal: true, vertical: false)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("infospace-layout-controls")
     }
 
@@ -149,6 +150,7 @@ public struct InfoSpaceLayoutControls: View {
                 .contentTransition(.numericText())
             dimensionButton(value: value + 1, identifier: identifier, isRow: isRow, increasing: true)
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("infospace-layout-\(identifier)")
     }
 
