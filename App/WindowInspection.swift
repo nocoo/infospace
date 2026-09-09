@@ -5,7 +5,9 @@ import InfoSpaceCore
 /// Opt-in checks drive this process's own window. They are not system Accessibility E2E tests.
 @MainActor
 enum WindowInspection {
-    static let isEnabled = ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--inspect=") }
+    static let isEnabled = ProcessInfo.processInfo.arguments.contains { argument in
+        argument.hasPrefix("--inspect=") || argument == "--demo"
+    }
     static var frames: [String: CGRect] = [:]
     static var notes: [String: String] = [:]
     static var colorChanges = 0
@@ -15,20 +17,33 @@ enum WindowInspection {
     struct WeakToolbarMarker { weak var view: NSView? }
 
     static func runIfRequested(model: InfoSpaceModel) async {
-        guard let argument = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--inspect=") }) else {
-            return
+        let inspect = ProcessInfo.processInfo.arguments.first { $0.hasPrefix("--inspect=") }
+        let demo = ProcessInfo.processInfo.arguments.contains("--demo")
+        guard inspect != nil || demo else { return }
+        let directory = inspect.map {
+            URL(fileURLWithPath: String($0.dropFirst("--inspect=".count)), isDirectory: true)
         }
-        let directory = URL(fileURLWithPath: String(argument.dropFirst("--inspect=".count)), isDirectory: true)
         do {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            if let directory {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            }
             try await Task.sleep(for: .milliseconds(800))
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }) else {
                 throw InspectionError.missingWindow
             }
-            try await InspectionSession(model: model, window: window, directory: directory).run()
+            let session = InspectionSession(
+                model: model, window: window,
+                directory: directory ?? FileManager.default.temporaryDirectory)
+            if inspect != nil {
+                try await session.run()
+            } else {
+                await session.runDemo()
+            }
         } catch {
-            try? String(describing: error).write(
-                to: directory.appending(path: "error.txt"), atomically: true, encoding: .utf8)
+            if let directory {
+                try? String(describing: error).write(
+                    to: directory.appending(path: "error.txt"), atomically: true, encoding: .utf8)
+            }
         }
     }
 

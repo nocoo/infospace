@@ -100,6 +100,7 @@ brew install xcodegen swiftlint
 | `./scripts/format.sh` | 格式化 Swift 代码 |
 | `./scripts/lint.sh` | 运行 SwiftLint 与 swift-format 检查 |
 | `./scripts/check.sh` | 运行本地检查、单元测试、示例编译与 Release 包构建 |
+| `python3 scripts/demo.py` | 启动一分钟产品演示；开始前暂停 10 秒，过程中不改变窗口尺寸 |
 
 ```text
 Sources/InfoSpaceCore/       布局、稳定 ID、比例与吸附
@@ -132,6 +133,13 @@ python3 scripts/verify-ui.py
 ```
 
 检查脚本启动独立演示进程，在自身窗口内执行操作并截图；报告与截图保存到 `.local/inspections/`。
+
+产品演示同样需要已登录的桌面和 Debug 应用。窗口先暂停 10 秒方便开始录屏，随后在约 50 秒内走完拖拽、聚焦、插入和布局预设，过程中不改变窗口尺寸：
+
+```bash
+./scripts/build.sh -quiet
+python3 scripts/demo.py
+```
 
 ## 技术栈
 

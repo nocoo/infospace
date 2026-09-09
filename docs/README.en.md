@@ -100,6 +100,7 @@ The build script generates the Xcode project and writes the Debug app to `.build
 | `./scripts/format.sh` | Format Swift code |
 | `./scripts/lint.sh` | Run SwiftLint and swift-format checks |
 | `./scripts/check.sh` | Run local checks, unit tests, example compilation and a Release package build |
+| `python3 scripts/demo.py` | Play a one-minute product walkthrough; waits 10 seconds first and never resizes the window |
 
 ```text
 Sources/InfoSpaceCore/       Layout, stable IDs, proportions and snapping
@@ -132,6 +133,13 @@ python3 scripts/verify-ui.py
 ```
 
 The inspection script starts a dedicated demo process, interacts with its own window and captures that window. Reports and screenshots are saved to `.local/inspections/`.
+
+A product walkthrough uses the same Debug app. The window waits 10 seconds so recording can start, then runs divider drags, focus, insertion and layout presets in about 50 seconds without changing the window size:
+
+```bash
+./scripts/build.sh -quiet
+python3 scripts/demo.py
+```
 
 ## Stack
 
