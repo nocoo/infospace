@@ -27,6 +27,16 @@ struct CustomizedWorkspaceExample: View {
 
     var body: some View {
         InfoSpaceWorkspace(canvas: canvas, regions: regions)
+            .infoSpaceLocalization(
+                InfoSpaceLocalization { text in
+                    // A real host resolves these typed cases through its own catalog.
+                    switch text {
+                    case .restoreSpace: "Reopen panel"
+                    case .minimizeSpace: "Hide panel"
+                    default: text.defaultText
+                    }
+                }
+            )
             .alert("Space limit reached", isPresented: $insertionFailed) { Button("OK", role: .cancel) {} }
     }
 

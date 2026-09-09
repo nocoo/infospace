@@ -21,3 +21,14 @@ Run scripts/check.sh and compile the example and native demo after SDK changes.
 UI changes also require the dedicated native window checks in CONTRIBUTING.md.
 Record actual validation results; generated native probes are not Accessibility
 E2E or a measurement of all SwiftUI rendering performance.
+
+Host language integration uses `InfoSpaceLocalization` and typed `InfoSpaceText`
+in the UI target. Keep built-in text behind that environment hook. The host owns
+its catalog, language preference and observation; the SDK keeps English defaults
+and never translates custom content or stores language in layout state.
+
+On 2026-09-09 the owner paused automated tests during consumer manual validation.
+The localization hook compiled with both `InfoSpaceExamples` and the `InfoSpace`
+executable in Release (4.00 s and 1.22 s). `scripts/check.sh` and native window
+validation remain deferred until automation is resumed. No application was
+launched or activated for these builds.

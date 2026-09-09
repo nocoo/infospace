@@ -14,6 +14,7 @@ struct SpaceResizeHandle: View {
     @GestureState private var isDragging = false
     @FocusState private var keyboardFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.infoSpaceLocalization) private var localization
 
     private var isActive: Bool {
         guard let active = model.activeDivider else { return false }
@@ -75,7 +76,7 @@ struct SpaceResizeHandle: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(valueLabel)
-        .accessibilityHint("Drag freely and release to snap to the grid, or adjust one tick with the arrow keys")
+        .accessibilityHint(localization.text(.resizeHint))
         .accessibilityAdjustableAction { direction in
             let delta = direction == .increment ? 1 : -1
             _ = nudge(column: target.column == nil ? 0 : delta, row: target.row == nil ? 0 : delta)
@@ -135,10 +136,10 @@ struct SpaceResizeHandle: View {
 
     private var label: String {
         if let column = target.column, let row = target.row {
-            return "Intersection, column \(column + 1), row \(row + 1)"
+            return localization.text(.intersection(column: column + 1, row: row + 1))
         }
-        if let column = target.column { return "Column divider \(column + 1)" }
-        return "Row divider \((target.row ?? 0) + 1)"
+        if let column = target.column { return localization.text(.columnDivider(column + 1)) }
+        return localization.text(.rowDivider((target.row ?? 0) + 1))
     }
 
     private var valueLabel: String {
@@ -147,15 +148,15 @@ struct SpaceResizeHandle: View {
             let tick =
                 model.dragPreview.flatMap { $0.target.column == column ? $0.columnTick : nil }
                 ?? Double(model.grid.columns.dividers[column])
-            values.append("Horizontal \(tick.formatted(.number.precision(.fractionLength(0...1)))) / 32")
+            values.append(localization.text(.horizontalPosition(tick)))
         }
         if let row = target.row, model.grid.rows.dividers.indices.contains(row) {
             let tick =
                 model.dragPreview.flatMap { $0.target.row == row ? $0.rowTick : nil }
                 ?? Double(model.grid.rows.dividers[row])
-            values.append("Vertical \(tick.formatted(.number.precision(.fractionLength(0...1)))) / 32")
+            values.append(localization.text(.verticalPosition(tick)))
         }
-        return values.joined(separator: ", ")
+        return values.joined(separator: localization.text(.valueSeparator))
     }
 
     private func nudge(column: Int, row: Int) -> KeyPress.Result {

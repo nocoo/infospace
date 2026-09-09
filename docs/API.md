@@ -122,6 +122,24 @@ Hosts can map their design tokens into `SpacePanelStyle.titleFont`, `bannerTitle
 
 Set `style.panel.controlButtonStyle = SpaceControlButtonStyle(MyButtonStyle())` to reuse a host's standard hover, press, selection and disabled feedback on built-in actions, custom actions and overflow menus. The supplied SwiftUI `ButtonStyle` receives the original configuration and inherited environment, including enabled state and Reduce Motion. It owns the control background; the SDK does not paint a second fill beneath it. Keep sizing in `SpacePanelStyle` so overflow decisions use the actual hit targets. A nil override keeps the SDK's default appearance. The SDK still owns actions, roles, identifiers and keyboard/accessibility behavior; this hook does not replace business commands.
 
+### Host localization
+
+Apply `.infoSpaceLocalization(InfoSpaceLocalization { text in ... })` to a common
+ancestor of the canvas and optional layout controls. The resolver receives typed
+`InfoSpaceText` cases with panel titles, row/column counts or divider positions as
+arguments. Use the host's catalog and locale to translate built-in menu items,
+tooltips, accessibility labels, resize hints and dimension controls. The compiled
+`CustomizedWorkspaceExample` demonstrates overriding selected labels; return
+`text.defaultText` for an English fallback. `.english` preserves the default SDK
+wording when no override is supplied.
+
+Resolution happens while views render. The host owns language observation and
+persistence; an environment change does not replace the model, panel identity or
+editor. Keep one `InfoSpaceModel` when switching languages. Custom panel titles,
+actions, content, window titles and branding stay under host ownership and are
+never translated by the SDK. Language selection does not issue layout commands
+or change revisions, protection, undo or serialized state.
+
 The canvas also accepts custom builders:
 
 | Builder | Context |

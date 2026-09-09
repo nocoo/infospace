@@ -16,6 +16,7 @@ struct SpacePanel<Content: View>: View {
     let bannerContent: ((SpaceBannerContext) -> AnyView)?
     let overlayContent: ((SpacePanelContext) -> AnyView)?
     @State private var hovered = false
+    @Environment(\.infoSpaceLocalization) private var localization
 
     private var cornerRadius: CGFloat { isBanner ? style.bannerCornerRadius : style.cornerRadius }
     private var showsContent: Bool {
@@ -79,7 +80,7 @@ struct SpacePanel<Content: View>: View {
         .onHover { hovered = $0 }
         .contextMenu {
             if isBanner {
-                Button("Restore space", systemImage: "arrow.uturn.backward", action: restore)
+                Button(localization.text(.restoreSpace), systemImage: "arrow.uturn.backward", action: restore)
             } else {
                 customMenuActions
                 if !actions.isEmpty { Divider() }
@@ -112,10 +113,12 @@ struct SpacePanel<Content: View>: View {
             } else {
                 HStack(spacing: style.controlSpacing) {
                     additionalButtons
-                    panelButton("minus", title: "Minimize \(appearance.title)", id: "minimize", action: minimize)
+                    panelButton(
+                        "minus", title: localization.text(.minimize(appearance.title)), id: "minimize", action: minimize
+                    )
                     panelButton(
                         isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-                        title: isMaximized ? "Restore layout" : "Maximize \(appearance.title)",
+                        title: localization.text(isMaximized ? .restoreLayout : .maximize(appearance.title)),
                         id: "maximize", action: maximize)
                 }
             }
@@ -138,7 +141,7 @@ struct SpacePanel<Content: View>: View {
             }
             .menuStyle(.button).menuIndicator(.hidden).fixedSize()
             .modifier(SpaceControlAppearance(style: style.controlButtonStyle))
-            .accessibilityLabel("Additional actions for \(appearance.title)")
+            .accessibilityLabel(localization.text(.additionalActions(appearance.title)))
         }
     }
 
@@ -159,7 +162,7 @@ struct SpacePanel<Content: View>: View {
         }
         .menuStyle(.button).menuIndicator(.hidden).fixedSize()
         .modifier(SpaceControlAppearance(style: style.controlButtonStyle))
-        .accessibilityLabel("Actions for \(appearance.title)")
+        .accessibilityLabel(localization.text(.actions(appearance.title)))
     }
 
     private var customMenuActions: some View {
@@ -172,10 +175,10 @@ struct SpacePanel<Content: View>: View {
     private var builtInMenuActions: some View {
         Group {
             Button(
-                isMaximized ? "Restore layout" : "Maximize space",
+                localization.text(isMaximized ? .restoreLayout : .maximizeSpace),
                 systemImage: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                 action: maximize)
-            Button("Minimize space", systemImage: "minus", action: minimize)
+            Button(localization.text(.minimizeSpace), systemImage: "minus", action: minimize)
         }
     }
 
@@ -184,7 +187,7 @@ struct SpacePanel<Content: View>: View {
             Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity).contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Restore \(appearance.title)")
+        .accessibilityLabel(localization.text(.restore(appearance.title)))
         .accessibilityIdentifier("restore-\(space.id)")
     }
 

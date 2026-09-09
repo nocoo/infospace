@@ -11,6 +11,7 @@ public struct InfoSpaceLayoutControls: View {
     @State private var locallyExpanded = true
     @State private var expandedWidth: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.infoSpaceLocalization) private var localization
 
     /// The default dimension action preserves all spaces and disables layouts with insufficient capacity.
     /// Supply `onDimensionsChange` to implement a different policy, such as a dense demo preset.
@@ -53,9 +54,9 @@ public struct InfoSpaceLayoutControls: View {
                     .background(style.theme.controlBackground, in: RoundedRectangle(cornerRadius: 8))
                     .contentShape(.rect)
             }
-            .help(isExpanded ? "Collapse layout controls" : "Expand layout controls")
-            .accessibilityLabel(isExpanded ? "Collapse layout controls" : "Expand layout controls")
-            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .help(localization.text(isExpanded ? .collapseLayoutControls : .expandLayoutControls))
+            .accessibilityLabel(localization.text(isExpanded ? .collapseLayoutControls : .expandLayoutControls))
+            .accessibilityValue(localization.text(isExpanded ? .expanded : .collapsed))
             .accessibilityIdentifier("toggle-layout-controls")
         }
         .buttonStyle(.plain)
@@ -73,18 +74,20 @@ public struct InfoSpaceLayoutControls: View {
             }
             .padding(3)
             .background(style.theme.controlBackground, in: RoundedRectangle(cornerRadius: 9))
-            dimensionControl("Rows", value: model.grid.rows.count, identifier: "rows", isRow: true)
-            dimensionControl("Columns", value: model.grid.columns.count, identifier: "columns", isRow: false)
+            dimensionControl(localization.text(.rows), value: model.grid.rows.count, identifier: "rows", isRow: true)
+            dimensionControl(
+                localization.text(.columns), value: model.grid.columns.count, identifier: "columns", isRow: false)
             HStack(spacing: 6) {
-                controlButton("grid", title: "Show grid", id: "toggle-grid", selected: model.showsGrid) {
+                controlButton("grid", title: localization.text(.showGrid), id: "toggle-grid", selected: model.showsGrid)
+                {
                     model.showsGrid.toggle()
                 }
                 controlButton(
                     "arrow.left.and.right.righttriangle.left.righttriangle.right",
-                    title: "Balance rows and columns", id: "balance"
+                    title: localization.text(.balanceRowsAndColumns), id: "balance"
                 ) { model.balance() }
                 .disabled(model.maximized != nil)
-                controlButton("arrow.uturn.backward", title: "Restore all spaces", id: "restore-all") {
+                controlButton("arrow.uturn.backward", title: localization.text(.restoreAllSpaces), id: "restore-all") {
                     model.restoreAll()
                 }
                 .disabled(model.maximized == nil && model.minimized.isEmpty)
@@ -110,7 +113,7 @@ public struct InfoSpaceLayoutControls: View {
             .contentShape(.rect)
         }
         .disabled(!canResize(rows: rows, columns: columns))
-        .accessibilityLabel("\(rows) rows, \(columns) columns")
+        .accessibilityLabel(localization.text(.dimensions(rows: rows, columns: columns)))
         .accessibilityIdentifier("preset-\(rows)x\(columns)")
     }
 
@@ -135,7 +138,12 @@ public struct InfoSpaceLayoutControls: View {
                 .contentShape(.rect)
         }
         .disabled(!canResize(rows: rows, columns: columns))
-        .accessibilityLabel("\(increasing ? "Increase" : "Decrease") \(identifier)")
+        .accessibilityLabel(
+            localization.text(
+                isRow
+                    ? (increasing ? .increaseRows : .decreaseRows)
+                    : (increasing ? .increaseColumns : .decreaseColumns))
+        )
         .accessibilityIdentifier("\(increasing ? "increase" : "decrease")-\(identifier)")
     }
 
