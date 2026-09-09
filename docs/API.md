@@ -1,0 +1,126 @@
+# SDK guide
+
+Info Space provides two library products: `InfoSpaceCore` and `InfoSpaceUI`. There are no third-party runtime dependencies. All model mutations and SwiftUI interactions run on the main actor.
+
+## Choosing a container
+
+| Component | Purpose |
+| --- | --- |
+| `InfoSpaceCanvas` | Just the grid. Embed it anywhere, including a small area in the top-right of another view. It imposes no window minimum size or toolbar. |
+| `InfoSpaceWorkspace` | The canvas with optional top, bottom, leading and trailing regions, configurable padding and spacing. This is a regular SwiftUI `View`. |
+| `InfoSpaceWindow` | An optional native `Scene` with a unified header, screen-relative launch size, centering and configurable window background. |
+| `InfoSpaceToolbar` | A native toolbar with a custom brand, up to three adjacent actions, and a custom trailing view. |
+| `InfoSpaceLayoutControls` | Optional row/column, preset, grid and restore controls with an animated collapse button. Use them in a toolbar or any workspace region. |
+| `InfoSpaceFooter` | Optional leading and trailing content slots aligned to the two edges of the workspace. |
+
+The [embedded grid](../Examples/EmbeddedGridExample.swift), [custom workspace](../Examples/CustomizedWorkspaceExample.swift) and [full window](../Examples/WorkspaceWindowExample.swift) examples are compiled by `swift build --target InfoSpaceExamples`.
+
+## Footer and surrounding regions
+
+`InfoSpaceRegions` accepts independent `top`, `bottom`, `leading` and `trailing` view builders. All are empty by default. Put `InfoSpaceFooter` in the bottom region to fill its left and right sides independently. Either slot can contain text, status indicators, menus or buttons, and either can be omitted. There is no built-in instructional text.
+
+```swift
+let regions = InfoSpaceRegions(bottom: {
+    InfoSpaceFooter(style: style) {
+        Text("Connected")
+    } trailing: {
+        Button("Restore all") { model.restoreAll() }
+    }
+})
+
+InfoSpaceWorkspace(canvas: canvas, regions: regions)
+```
+
+The footer inherits theme colors and provides configurable minimum height and spacing. Its content remains ordinary SwiftUI, so callers can apply their own fonts, colors and layouts. The workspace also has a general `canvas` view-builder initializer for applying host modifiers or wrapping the grid before embedding it.
+
+## Stable identities and positions
+
+`SpaceID` identifies content; `SpacePosition(row:column:)` identifies a zero-based grid cell. Moving a space does not change its ID. Supply a business identifier such as `SpaceID("inbox")`, or let the initializer generate a UUID. Dense grids seed IDs such as `r0c1`; those strings describe their initial positions only. Use `model.position(of:)` for their current positions.
+
+```swift
+let model = InfoSpaceModel(rows: 2, columns: 4, fillEmptyCells: false)
+let notes = SpaceID("notes")
+try model.insertSpace(notes, at: SpacePosition(row: 1, column: 3))
+try model.moveSpace(notes, to: SpacePosition(row: 0, column: 2))
+try model.setProportions(rows: [1, 2], columns: [1, 2, 2, 1])
+```
+
+The canvas animates successful structural mutations automatically. It keeps content mounted under the same ID while moving, minimizing and maximizing. Removing a space ends that view's lifetime. Keep durable data in your own model; the package does not persist content or layouts across application launches.
+
+## Insertion and collisions
+
+`insertSpace(_:at:collision:)` returns the inserted ID. The new space occupies the requested position. With the default `.shiftForward` policy, occupied cells move forward in row-major order until reaching a vacancy, wrapping to the beginning if needed. A full grid grows by one row; at the row limit it grows by one column. Inserting beyond the current dimensions grows the required axes. Newly created cells remain vacant unless used by the shift.
+
+Use `.reject` to reject an occupied cell. Both axes support 1–8 tracks, so valid row and column indices are 0–7 and the maximum capacity is 64. Invalid positions, duplicate IDs and capacity failures throw `InfoSpaceError`. Failure leaves the committed layout, drag preview and presentation state unchanged.
+
+`moveSpace(_:to:collision:)` swaps with an occupied destination by default; `.reject` instead throws. Moving outside the current dimensions grows the grid within the same limits. `removeSpace(_:)` removes the entry and leaves a vacancy.
+
+Successful insertion, removal, movement, resize and proportion changes exit maximize mode to expose the changed layout. Minimized IDs that still exist remain minimized. Changing an axis's track count redistributes that axis evenly; an unchanged axis retains its proportions.
+
+## Resizing and proportions
+
+`resizeGrid(rows:columns:)` preserves every space. Entries outside the new dimensions move into free cells; insufficient capacity throws an error. Expanding leaves empty cells. The standard layout controls use this policy and disable requests that would lose data.
+
+`setDimensions(rows:columns:)` is a dense-grid convenience used by the demo. It removes entries outside the new dimensions and fills all vacancies. Use `resizeGrid` for workspaces holding user data. To intentionally use the demo policy in controls:
+
+```swift
+InfoSpaceLayoutControls(model: model) { rows, columns in
+    model.setDimensions(rows: rows, columns: columns)
+}
+```
+
+`setProportions(rows:columns:)` accepts positive, finite relative weights. Counts must match the existing axes. Committed positions use 32 ticks per axis with a minimum of two ticks per track. Both axes update atomically; invalid input changes neither axis.
+
+Dragging follows the pointer continuously, including within a grid cell. Only release rounds to the nearest tick. Keyboard and accessibility adjustments move one committed tick at a time. An intersection updates both axes together. Neighboring dividers never cross.
+
+## Panels
+
+The required header shows an SF Symbol and a title from `SpaceAppearance`. Its two rightmost buttons remain minimize and maximize/restore. `SpaceAction` values add custom buttons immediately before them. Give actions unique, stable IDs. Additional actions move into an overflow menu when the panel is narrow; extremely small panels put all actions in a compact menu.
+
+```swift
+let refresh = SpaceAction(id: "refresh", title: "Refresh", systemImage: "arrow.clockwise") { identity in
+    refreshContent(for: identity)
+}
+```
+
+Pass an `actions: (SpaceID) -> [SpaceAction]` closure to the canvas or workspace. It can return different actions for each panel, including disabled actions or a `ButtonRole`.
+
+`SpaceAppearance` controls the panel title, icon, background color, foreground, header background, control background and border. Disable `usesGradient` for a solid fill, or supply `customBackground: AnyShapeStyle`. `SpacePanelStyle` controls header height, corner radii, content padding, border width and the size threshold below which content is hidden. Hidden content remains mounted.
+
+The canvas also accepts custom builders:
+
+| Builder | Context |
+| --- | --- |
+| `.banner { ... }` | Space identity, appearance and a `restore` closure. The custom view owns the restore button. |
+| `.emptyCell { ... }` | The vacant `SpacePosition`; useful for an insertion button. |
+| `.emptyState { ... }` | Content for a workspace with no expanded spaces. |
+| `.resizeHandle { ... }` | Divider target, active, hover and keyboard-focus state. Native hit areas, gestures and keyboard behavior are preserved. |
+| `.panelOverlay { ... }` | Identity, appearance, size and presentation state. Use `allowsHitTesting(false)` for purely decorative overlays. |
+
+## Window header actions
+
+`InfoSpaceToolbar` places `leadingActions` immediately to the right of your brand view. It displays the first three entries, using the same theme, 30-point button size and rounded background as the trailing layout controls. An empty array omits the group. The brand and trailing controls are separate view builders, so callers can replace either.
+
+Use `InfoSpaceHeaderAction` with an action closure for commands, or with a `URL` for a link. Links use SwiftUI's `openURL` environment action. The demo includes a link to `https://github.com/nocoo/infospace`.
+
+```swift
+let help = InfoSpaceHeaderAction(id: "help", title: "Help", systemImage: "questionmark") {
+    showHelp()
+}
+
+InfoSpaceToolbar(style: style, leadingActions: [help]) {
+    Label("My workspace", systemImage: "square.grid.2x2")
+} controls: {
+    InfoSpaceLayoutControls(model: model, style: style)
+}
+```
+
+Add the toolbar with the usual `.toolbar { ... }` modifier inside `InfoSpaceWindow`, or use it in your own window scene. Controls start expanded. Their right-facing arrow collapses them toward the right with an animation. The remaining left-facing arrow reopens them. Supply `isExpanded: Binding<Bool>` to manage expansion from your host app.
+
+## Theme, motion and performance
+
+Share one `InfoSpaceStyle` across the canvas, workspace and toolbar. `InfoSpaceTheme` contains workspace, control, divider and grid colors, with automatic, dark and light defaults. `SpaceLayoutMetrics` controls gaps and the banner shelf. Window colors and initial sizing live in `InfoSpaceWindowConfiguration`; its default launch frame uses 92% of available screen width and 90% of available height.
+
+`InfoSpaceMotion` configures structural transitions, release snapping and toolbar animation. Use `.none` to disable them. The canvas and controls respect the system's Reduce Motion setting. Drag tracking is immediate, without queuing animations for pointer events.
+
+The grid performs one geometry projection for all panels and uses one SwiftUI `Canvas` for the grid overlay. Each embedded canvas has its own gesture coordinate space. Content stays strongly typed; type erasure is limited to optional replacement slots. Stable IDs and lightweight content views avoid unnecessary work during drags. Expensive content still receives live size changes; snapshot freezing is not implemented. Measure rendering with the content you intend to host. The included geometry benchmark does not measure display frame rate.

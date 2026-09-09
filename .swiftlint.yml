@@ -1,0 +1,40 @@
+included:
+  - Sources
+  - App
+  - Tests
+  - Examples
+  - Package.swift
+excluded:
+  - .build
+  - .local
+  - .swiftpm
+
+opt_in_rules:
+  - closure_spacing
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_count
+  - empty_string
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - last_where
+  - modifier_order
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - sorted_imports
+  - unneeded_parentheses_in_closure_argument
+
+line_length:
+  warning: 140
+  error: 140
+  ignores_urls: true
+function_body_length:
+  warning: 60
+  error: 80
+function_parameter_count:
+  ignores_default_parameters: true
+identifier_name:
+  excluded: [id, x, y]
+trailing_comma:
+  mandatory_comma: true

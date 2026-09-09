@@ -1,0 +1,50 @@
+name: InfoSpace
+options:
+  minimumXcodeGenVersion: 2.46.0
+  deploymentTarget:
+    macOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  InfoSpace:
+    path: .
+targets:
+  InfoSpace:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+    dependencies:
+      - package: InfoSpace
+        product: InfoSpaceCore
+      - package: InfoSpace
+        product: InfoSpaceUI
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Info Space
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.productivity
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: Copyright © 2026 NOCOO. MIT License.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.nocoo.infospace
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  InfoSpace:
+    build:
+      targets:
+        InfoSpace: all
+    run:
+      config: Debug
