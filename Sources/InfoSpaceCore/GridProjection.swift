@@ -27,6 +27,15 @@ struct GridProjection {
         rowStops = Self.stops(layout.grid.rows, index: preview?.target.row, tick: preview?.rowTick)
         columnStops = Self.stops(layout.grid.columns, index: preview?.target.column, tick: preview?.columnTick)
         gutter = min(metrics.gutter, min(bounds.width, bounds.height) / CGFloat(SnapAxis.resolution) * 1.6)
+        if layout.hasSpans {
+            let projection = SpanningGridProjection(
+                layout: layout, minimized: minimized, bounds: bounds, preview: preview, metrics: metrics)
+            frames = projection.frames
+            emptyCells = projection.emptyCells
+            dividers = projection.dividers
+            intersections = projection.intersections
+            return
+        }
         guard bounds.width > 0, bounds.height > 0 else { return }
         visibleRows = (0..<layout.grid.rows.count).filter { !availableColumns(in: $0).isEmpty }
         for (position, row) in visibleRows.enumerated() { appendRow(row, at: position) }

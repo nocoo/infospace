@@ -36,6 +36,7 @@ final class InspectionSession {
         await inspectControls()
         await inspectPresets()
         await inspectDenseAndSmallLayouts()
+        try await inspectProtectedSpan()
         try writeReport()
     }
 

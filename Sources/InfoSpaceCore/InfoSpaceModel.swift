@@ -3,13 +3,20 @@ import Observation
 
 @MainActor @Observable
 public final class InfoSpaceModel {
-    public private(set) var layout: SpaceLayout
-    public private(set) var presentationRevision = 0
+    public internal(set) var layout: SpaceLayout
+    public internal(set) var presentationRevision = 0
+    public internal(set) var revision: UInt64 = 0
+    public internal(set) var lastError: InfoSpaceError?
+    public var commandHandler: (@MainActor (SpaceCommand, UInt64) -> Void)?
+    public var snapshot: SpaceSnapshot {
+        // All mutation paths validate before installing these fields.
+        get throws { try SpaceSnapshot(layout: layout, revision: revision, minimized: minimized, maximized: maximized) }
+    }
     public var grid: SpaceGrid { layout.grid }
-    public private(set) var minimized: Set<SpaceID> = []
-    public private(set) var maximized: SpaceID?
+    public internal(set) var minimized: Set<SpaceID> = []
+    public internal(set) var maximized: SpaceID?
     public var showsGrid = false
-    public private(set) var dragPreview: DividerPreview?
+    public internal(set) var dragPreview: DividerPreview?
     public var activeDivider: DividerTarget? { dragPreview?.target }
 
     public init(rows: Int = 2, columns: Int = 2, fillEmptyCells: Bool = true) {
@@ -17,6 +24,14 @@ public final class InfoSpaceModel {
     }
 
     public init(layout: SpaceLayout) { self.layout = layout }
+
+    public init(snapshot: SpaceSnapshot) throws {
+        try snapshot.validate()
+        layout = snapshot.layout
+        revision = snapshot.revision
+        minimized = snapshot.minimized
+        maximized = snapshot.maximized
+    }
 
     public var spaces: [SpaceID] { layout.entries.map(\.id) }
 
@@ -30,7 +45,7 @@ public final class InfoSpaceModel {
         var next = layout
         if next.grid.rows.count != min(8, max(1, rows)) { next.grid.rows = SnapAxis(count: rows) }
         if next.grid.columns.count != min(8, max(1, columns)) { next.grid.columns = SnapAxis(count: columns) }
-        next.entries.removeAll { !next.grid.contains($0.position) }
+        next.entries.removeAll { (try? $0.occupiedPositions(in: next.grid)) == nil }
         var identities = Set(next.entries.map(\.id))
         for position in next.grid.positions where next.space(at: position) == nil {
             let seeded = SpaceID(row: position.row, column: position.column)
@@ -39,22 +54,14 @@ public final class InfoSpaceModel {
             next.entries.append(SpaceEntry(id: identity, position: position))
         }
         guard next != layout else { return }
-        applyLayout(next)
+        do {
+            let valid = try SpaceLayout(grid: next.grid, entries: next.entries)
+            try valid.validatePreservingConstraints(of: layout)
+            try request(.restoreSnapshot(SpaceSnapshot(layout: valid)))
+        } catch { lastError = error as? InfoSpaceError ?? .invalidSnapshot }
     }
 
-    public func balance() {
-        cancelDrag()
-        layout.grid = SpaceGrid(rows: grid.rows.count, columns: grid.columns.count)
-        presentationRevision &+= 1
-    }
-
-    func applyLayout(_ next: SpaceLayout) {
-        cancelDrag()
-        maximized = nil
-        minimized.formIntersection(Set(next.entries.map(\.id)))
-        layout = next
-        presentationRevision &+= 1
-    }
+    public func balance() { perform(.layout([.balance])) }
 
     public func beginDrag(_ target: DividerTarget) {
         guard maximized == nil, target.column != nil || target.row != nil,
@@ -90,12 +97,15 @@ public final class InfoSpaceModel {
     public func move(_ target: DividerTarget, columnTick: Int?, rowTick: Int?) -> Bool {
         guard maximized == nil else { return false }
         cancelDrag()
-        var next = grid
-        if let index = target.column, let columnTick { next.columns.moveDivider(at: index, to: columnTick) }
-        if let index = target.row, let rowTick { next.rows.moveDivider(at: index, to: rowTick) }
-        guard next != grid else { return false }
-        layout.grid = next
-        return true
+        do {
+            let command = SpaceLayoutCommand.divider(target, columnTick: columnTick, rowTick: rowTick)
+            guard try layout.applying(command) != layout else { return false }
+            try request(.layout([command]))
+            return true
+        } catch {
+            lastError = error as? InfoSpaceError ?? .invalidSnapshot
+            return false
+        }
     }
 
     /// Snap once, after the final mouse-up position has been included in the preview.
@@ -108,41 +118,9 @@ public final class InfoSpaceModel {
 
     public func cancelDrag() { dragPreview = nil }
 
-    public func maximize(_ space: SpaceID) {
-        guard spaces.contains(space) else { return }
-        cancelDrag()
-        minimized.remove(space)
-        maximized = maximized == space ? nil : space
-        presentationRevision &+= 1
-    }
-
-    public func minimize(_ space: SpaceID) {
-        guard spaces.contains(space) else { return }
-        cancelDrag()
-        minimized.insert(space)
-        if maximized == space { maximized = nil }
-        presentationRevision &+= 1
-    }
-
-    /// Any edge banner exits focus mode; explicitly minimized panels restore individually.
-    public func restore(_ space: SpaceID) {
-        guard spaces.contains(space) else { return }
-        cancelDrag()
-        minimized.remove(space)
-        maximized = nil
-        presentationRevision &+= 1
-    }
-
-    public func restoreLayout() {
-        cancelDrag()
-        maximized = nil
-        presentationRevision &+= 1
-    }
-
-    public func restoreAll() {
-        cancelDrag()
-        minimized.removeAll()
-        maximized = nil
-        presentationRevision &+= 1
-    }
+    public func maximize(_ space: SpaceID) { perform(.maximize(space)) }
+    public func minimize(_ space: SpaceID) { perform(.minimize(space)) }
+    public func restore(_ space: SpaceID) { perform(.restore(space)) }
+    public func restoreLayout() { perform(.restoreLayout) }
+    public func restoreAll() { perform(.restoreAll) }
 }

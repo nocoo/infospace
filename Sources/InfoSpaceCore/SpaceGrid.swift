@@ -1,6 +1,6 @@
 import Foundation
 
-public struct DividerTarget: Hashable, Sendable {
+public struct DividerTarget: Codable, Hashable, Sendable {
     public let column: Int?
     public let row: Int?
     public var isIntersection: Bool { column != nil && row != nil }
@@ -18,7 +18,7 @@ public struct DividerPreview: Equatable, Sendable {
     public let rowTick: Double?
 }
 
-public struct SpaceGrid: Equatable, Sendable {
+public struct SpaceGrid: Codable, Equatable, Sendable {
     public var rows: SnapAxis
     public var columns: SnapAxis
 
