@@ -2,50 +2,39 @@
   <img src="../logo.svg" width="128" height="128" alt="Info Space logo" />
 </p>
 <h1 align="center">Info Space</h1>
-<p align="center"><strong>A native SwiftUI information workspace and embeddable SDK for macOS</strong><br>Organize panels · Resize layouts · Customize your workspace</p>
+<p align="center">Organize information panels in a macOS app and drag dividers to adjust the layout.</p>
+<p align="center"><a href="../README.md">简体中文</a></p>
 
-<p align="center">
-  <a href="https://github.com/nocoo/infospace/releases"><img src="https://img.shields.io/github/v/release/nocoo/infospace" alt="Release" /></a>
-  <img src="https://img.shields.io/badge/macOS-26%2B-222222?logo=apple" alt="macOS 26+" />
-  <img src="https://img.shields.io/badge/Swift-6.3-F05138?logo=swift&logoColor=white" alt="Swift 6.3" />
-  <img src="https://img.shields.io/badge/UI-SwiftUI-007AFF" alt="SwiftUI" />
-  <img src="https://img.shields.io/badge/tests-51_passing-brightgreen" alt="51 unit tests" />
-  <a href="https://github.com/nocoo/infospace/actions/workflows/ci.yml"><img src="https://github.com/nocoo/infospace/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT" /></a>
-</p>
-<p align="center"><a href="../README.md">中文</a> · <a href="API.md">SDK guide</a> · <a href="https://github.com/nocoo/infospace/releases">Releases</a></p>
-<p align="center"><img src="images/workspace.png" width="720" alt="Info Space with a unified header, four information panels and a custom footer" /></p>
+<p align="center"><img src="images/workspace.png" width="720" alt="Info Space panels, native toolbar and custom footer" /></p>
 
----
+## What it does
 
-## What is this?
+Info Space is a SwiftUI workspace SDK for macOS app developers, with a runnable demo app. It arranges information panels in a grid, lets you adjust proportions by dragging dividers or intersections, and supports minimizing panels or maximizing one of them.
 
-Info Space arranges multiple information panels in one macOS workspace. Drag a divider or an intersection to change the proportions: movement follows the pointer continuously, then snaps to the nearest grid tick on release.
-
-The repository contains a Swift package and a demo app. Embed a grid in an existing SwiftUI view, or compose a complete workspace with a native window and your own toolbar. Layout state is separate from the UI; your application supplies panel content and colors.
+`InfoSpaceCore` provides layout and interaction state; `InfoSpaceUI` provides grids, panels, workspaces and native window components. The host app supplies content, data sources and persistence. The demo inbox, project progress and schedule use sample data. Notes are editable, but content and layout are not saved between launches.
 
 ## Features
 
-- **Grid layouts** — Configure 1–8 rows and 1–8 columns on a 32 × 32 grid. Drag each divider independently or move both axes together at an intersection.
-- **Maximize and minimize** — Maximizing a panel keeps the others as colored banners with horizontal titles. Minimize individual panels and click their banners to restore them.
-- **Layout APIs** — Insert an animated space at a specified cell, move or remove spaces, and set proportions. Stable IDs preserve content identity.
-- **Custom panels** — Supply colors, content and extra actions. Panel headers retain their icon, title and fixed minimize/maximize buttons.
-- **Replaceable components** — Customize banners, vacant cells, overlays and divider appearance, or embed just the grid.
-- **Native window** — Share one header row with the traffic lights. Add up to three actions or links beside the brand and animate the layout controls closed.
-- **Surrounding regions** — Insert SwiftUI views above, below or beside the grid. The footer has independent leading and trailing slots; either can be empty.
-- **Native interaction** — Keyboard controls, accessibility labels and Reduce Motion support, with no third-party runtime dependencies.
+- Arrange panels in 1–8 rows and 1–8 columns. Dividers follow the pointer continuously and snap to a grid with 32 divisions per axis on release.
+- Minimize individual panels, or maximize one panel while keeping the others as titled banners. Click a banner to restore it.
+- Use APIs to insert, move or remove panels at specific cells, set row and column proportions, and create sparse layouts with vacant cells. Stable IDs preserve existing view state during moves, minimization and restoration.
+- Customize panel colors, icons, titles, content and extra actions. Replace banners, vacant cells, empty states, overlays and divider visuals.
+- Embed a grid on its own or compose a workspace with surrounding regions and independent footer slots. The native window toolbar supports a custom brand, up to three adjacent actions and collapsible layout controls.
+- Adjust dividers with arrow keys, use accessibility labels, and respect the system's Reduce Motion setting.
 
-## Installation
+## Usage
 
-Requires macOS 26+, Swift 6.3 and Xcode 26.6+. In Xcode, add `https://github.com/nocoo/infospace` and select the `InfoSpaceCore` and `InfoSpaceUI` library products.
+### Integrate the SDK
 
-For a Swift package, declare the dependency:
+Requires macOS 26+ and Swift 6.3; the repository uses Xcode 26.6+ for development. In Xcode, add `https://github.com/nocoo/infospace` and select the `InfoSpaceCore` and `InfoSpaceUI` products.
+
+Add the package dependency:
 
 ```swift
 .package(url: "https://github.com/nocoo/infospace.git", from: "0.1.0")
 ```
 
-Add the products to your target:
+Add the required library products to your target dependencies:
 
 ```swift
 .product(name: "InfoSpaceCore", package: "infospace"),
@@ -72,58 +61,29 @@ struct MyGrid: View {
 }
 ```
 
-`InfoSpaceCanvas` imposes no window minimum size and fits inside any SwiftUI layout. Use `InfoSpaceWorkspace` for a full workspace and `InfoSpaceWindow` for a native window. See the [compiled examples](../Examples) and [SDK guide](API.md) for more options.
+`InfoSpaceCanvas` embeds in an existing SwiftUI view without imposing a minimum window size. Use `InfoSpaceWorkspace` for surrounding regions and `InfoSpaceWindow` for a native window. See the [SDK guide](API.md) and [examples](../Examples) for complete integration options. Model mutations run on the main actor.
 
-v0.1.0 distributes the Swift package and source. Build the demo locally using the development steps below.
+For layouts containing user data, use `resizeGrid(rows:columns:)`: it preserves every panel and throws when capacity is insufficient. The demo's `setDimensions(rows:columns:)` removes panels outside the new bounds and fills vacancies to rebuild a sample layout. See [layout mutations](API.md#insertion-and-collisions) for insertion, movement and collision policies.
 
-## Commands
+### Use the demo
 
-These keyboard shortcuts are provided by the demo app:
+Build and open the demo using the development steps below. Drag dividers to change proportions, use a panel's `+` action to insert at that position, or use the palette button to change its color. The footer shows expanded and collapsed counts and provides a restore-all button.
 
 | Shortcut | Action |
 | --- | --- |
 | `⌘G` | Show or hide the grid |
 | `⌘0` | Balance rows and columns |
-| `⇧⌘0` | Restore all spaces |
+| `⇧⌘0` | Restore all panels |
 | `⌘1` / `⌘2` / `⌘3` | Select a 2 × 2, 2 × 4 or 3 × 4 layout |
 | `Esc` | Leave maximize mode |
 
-The `+` action in a panel inserts a space at that cell; the palette button changes its color. The header's code button opens GitHub, and the right arrow collapses the layout controls. The footer shows panel counts on the left and a restore-all action on the right.
-
-## Project structure
-
-```text
-infospace/
-├── App/                    # Native macOS demo and window inspection
-├── Sources/
-│   ├── InfoSpaceCore/      # Layout, stable IDs, proportions and snapping
-│   └── InfoSpaceUI/        # SwiftUI grid, panels and window components
-├── Tests/
-│   └── InfoSpaceCoreTests/ # Layout and interaction-state unit tests
-├── Examples/               # Examples compiled as SDK consumers
-├── docs/                   # SDK guide, English README and screenshots
-├── scripts/                # Build, lint, checks and version validation
-├── Package.swift           # Swift package products and targets
-├── package.json            # Release version metadata
-└── project.yml             # XcodeGen app configuration
-```
-
-## Technology
-
-| Layer | Technology |
-| --- | --- |
-| UI | [SwiftUI](https://developer.apple.com/xcode/swiftui/) |
-| Native window | [AppKit](https://developer.apple.com/documentation/appkit) |
-| State and concurrency | [Observation](https://developer.apple.com/documentation/observation), Swift 6 |
-| Package and app builds | [Swift Package Manager](https://www.swift.org/documentation/package-manager/), [XcodeGen](https://github.com/yonaskolb/XcodeGen) |
-| Testing | [Swift Testing](https://github.com/swiftlang/swift-testing), native window event inspection |
-| Code checks | [SwiftLint](https://github.com/realm/SwiftLint), [swift-format](https://github.com/swiftlang/swift-format) |
+Shrinking the demo layout removes panels outside its bounds and their temporary editing state. The host app should manage any content that needs to be saved.
 
 ## Development
 
-Install full Xcode and complete its first-launch setup, then build from source:
+Install full Xcode and complete its first-launch setup. Building the native app also requires XcodeGen 2.46+ and Python 3. Code checks use SwiftLint and the swift-format bundled with Xcode.
 
-```sh
+```bash
 git clone https://github.com/nocoo/infospace.git
 cd infospace
 brew install xcodegen swiftlint
@@ -131,49 +91,71 @@ brew install xcodegen swiftlint
 ./scripts/run.sh
 ```
 
-Scripts default to `/Applications/Xcode.app/Contents/Developer`; set `DEVELOPER_DIR` to use another Xcode installation. The window opens centered at 92% of the screen's available width and 90% of its height. Demo notes are editable; content and layout are not persisted between launches.
+The build script generates the Xcode project and writes the Debug app to `.build/xcode/Build/Products/Debug/InfoSpace.app`; the run script opens it. Scripts default to `/Applications/Xcode.app/Contents/Developer`. Set `DEVELOPER_DIR` to use another Xcode installation.
 
 | Command | Purpose |
 | --- | --- |
-| `./scripts/build.sh -quiet` | Generate the Xcode project and build the native app |
-| `./scripts/run.sh` | Open the demo window |
-| `./scripts/format.sh` | Apply Swift formatting |
-| `./scripts/lint.sh` | Run strict SwiftLint and swift-format checks |
-| `./scripts/check.sh` | Validate versions, run tests, compile examples and build Release |
-| `python3 scripts/verify-ui.py` | Inspect the native window in a logged-in macOS desktop session |
-| `python3 scripts/version.py --sync` | Synchronize the macOS app version from release metadata |
+| `./scripts/build.sh -quiet` | Build the native demo app |
+| `./scripts/run.sh` | Open the demo window, building it first if needed |
+| `./scripts/format.sh` | Format Swift code |
+| `./scripts/lint.sh` | Run SwiftLint and swift-format checks |
+| `./scripts/check.sh` | Run local checks, unit tests, example compilation and a Release package build |
 
-The root `package.json` contains release metadata only and adds no JavaScript runtime requirement. `Package.swift` manages Swift builds and dependencies. See [contributing](../CONTRIBUTING.md) for version synchronization and release steps.
+```text
+Sources/InfoSpaceCore/       Layout, stable IDs, proportions and snapping
+Sources/InfoSpaceUI/         SwiftUI grids, panels, workspaces and windows
+App/                        Demo content and native window inspection
+Examples/                   SDK consumer examples
+Tests/InfoSpaceCoreTests/    Layout and interaction-state unit tests
+```
 
-## Testing
+Swift Package Manager manages dependencies and package builds. `package.json` stores release version metadata. See [contributing](../CONTRIBUTING.md) for development and release steps.
 
-| Layer | Coverage | When it runs |
-| --- | --- | --- |
-| Static checks | Strict SwiftLint, swift-format and version consistency | Locally and in GitHub Actions |
-| Unit tests | Insertion, movement, collisions, rollback, proportions, snapping and sparse layouts | Locally and in GitHub Actions |
-| SDK examples | Embedded grid, customized workspace and full window consumers | Locally and in GitHub Actions |
-| App builds | Swift Release and native Debug bundle | Locally and in GitHub Actions |
-| Native window | Buttons, dragging, release snapping, footer, toolbar and retained content state | Separately on a local desktop |
+## Tests
 
-```sh
-./scripts/check.sh
+Run from the repository root. Before calling Swift tools directly, select your installed full Xcode. Adjust this path to match its location:
+
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+```
+
+| Scope | Command |
+| --- | --- |
+| Core layout and interaction-state unit tests | `swift test -Xswiftc -warnings-as-errors` |
+| SDK consumer example compilation | `swift build --target InfoSpaceExamples -Xswiftc -warnings-as-errors` |
+
+Native window inspection requires a logged-in macOS desktop session, Python 3 and a built Debug app:
+
+```bash
 ./scripts/build.sh -quiet
 python3 scripts/verify-ui.py
 ```
 
-v0.1.0 includes 51 unit tests and 36 native window checks. Layout tests cover all 4,096 minimization patterns of a twelve-panel grid. Window inspection sends events to and captures only its own window, writing reports to the Git-ignored `.local/inspections/` directory. It is not system Accessibility E2E testing and does not run in headless CI.
+The inspection script starts a dedicated demo process, interacts with its own window and captures that window. Reports and screenshots are saved to `.local/inspections/`.
 
-Content resizes live during dragging; snapshot freezing is not implemented. Geometry benchmarks exclude SwiftUI layout and rendering time.
+## Stack
+
+![Swift](https://img.shields.io/badge/Swift-F05138?logo=swift&logoColor=white)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-007AFF?logo=swift&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-222222?logo=apple&logoColor=white)
+
+| Area | Implementation |
+| --- | --- |
+| UI | SwiftUI grids, panels, toolbars and slots |
+| Native windows | AppKit window configuration and event handling |
+| Layout and state | Swift, Observation, MainActor |
+| Package and app builds | Swift Package Manager, XcodeGen, Xcode |
+| Verification | Swift Testing, native window event checks, ScreenCaptureKit window captures |
+| Development tools | SwiftLint, swift-format, Python scripts |
+
+The SDK has no third-party runtime dependencies.
 
 ## Documentation
 
-| Document | Contents |
-| --- | --- |
-| [SDK guide](API.md) | Containers, slots, appearance, actions and mutation semantics |
-| [Examples](../Examples) | Embedded grid, custom regions and native window |
-| [Contributing](../CONTRIBUTING.md) | Development, validation and release workflow |
-| [Changelog](../CHANGELOG.md) | Changes by version |
-| [中文 README](../README.md) | Chinese documentation |
+- [SDK guide](API.md): containers, slots, appearance, actions and layout mutation semantics.
+- [Consumer examples](../Examples): embedded grid, customized workspace and native window.
+- [Contributing](../CONTRIBUTING.md): development, checks and release steps.
+- [Changelog](../CHANGELOG.md): changes by version.
 
 ## License
 
