@@ -1,9 +1,31 @@
 import Foundation
 import InfoSpaceCore
+import Observation
+import Synchronization
 import Testing
 
 @MainActor
 struct InfoSpaceModelTests {
+    @Test func pointerTicksDoNotInvalidateGestureTargetObservers() {
+        let model = InfoSpaceModel()
+        let target = DividerTarget(column: 0)
+        model.beginDrag(target)
+        let changes = Mutex(0)
+        withObservationTracking {
+            _ = model.activeDivider
+        } onChange: {
+            changes.withLock { $0 += 1 }
+        }
+        for step in 1...30 {
+            model.updateDrag(target, columnTick: 12 + Double(step) / 10, rowTick: nil)
+            #expect(model.activeDivider == target)
+        }
+        #expect(changes.withLock { $0 } == 0)
+        model.cancelDrag()
+        #expect(changes.withLock { $0 } == 1)
+        #expect(model.activeDivider == nil && model.dragPreview == nil)
+    }
+
     @Test func anIntersectionUpdatesBothAxesAndIgnoresRepeatedTicks() {
         let model = InfoSpaceModel()
         let target = DividerTarget(column: 0, row: 0)

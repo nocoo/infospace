@@ -114,15 +114,18 @@ public struct InfoSpaceStyle {
     public var theme: InfoSpaceTheme
     public var layout: SpaceLayoutMetrics
     public var panel: SpacePanelStyle
+    public var controls: InfoSpaceLayoutControlStyle
     public var motion: InfoSpaceMotion
 
     public init(
         theme: InfoSpaceTheme = .init(), layout: SpaceLayoutMetrics = .init(),
-        panel: SpacePanelStyle = .init(), motion: InfoSpaceMotion = .init()
+        panel: SpacePanelStyle = .init(), motion: InfoSpaceMotion = .init(),
+        controls: InfoSpaceLayoutControlStyle = .init()
     ) {
         self.theme = theme
         self.layout = layout
         self.panel = panel
+        self.controls = controls
         self.motion = motion
     }
 }

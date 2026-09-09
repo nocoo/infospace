@@ -22,6 +22,13 @@ struct CustomizedWorkspaceExample: View {
         style.panel.controlSpacing = 4
         style.panel.controlButtonStyle = SpaceControlButtonStyle(ExampleControlStyle())
         style.panel.contentHeaderOverlap = 0
+        style.controls.controlSide = 40
+        style.controls.dimensionSize = CGSize(width: 40, height: 40)
+        style.controls.font = .system(size: 14)
+        style.controls.valueFont = .system(size: 14, weight: .medium, design: .monospaced)
+        style.controls.symbolFont = .system(size: 16)
+        style.controls.dimensionSymbolFont = .system(size: 16)
+        style.controls.buttonStyle = SpaceControlButtonStyle(ExampleControlStyle())
         return style
     }
 
@@ -85,7 +92,9 @@ struct CustomizedWorkspaceExample: View {
             HStack {
                 Label("Research", systemImage: "books.vertical")
                 Spacer()
-                InfoSpaceLayoutControls(model: model, style: style, isExpanded: $controlsExpanded)
+                InfoSpaceLayoutControls(
+                    model: model, style: style, isExpanded: $controlsExpanded,
+                    options: .init(showsPresets: false))
             }
         } bottom: {
             InfoSpaceFooter(style: style) {

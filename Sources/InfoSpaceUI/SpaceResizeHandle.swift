@@ -144,15 +144,16 @@ struct SpaceResizeHandle: View {
 
     private var valueLabel: String {
         var values: [String] = []
+        let preview = isActive ? model.dragPreview : nil
         if let column = target.column, model.grid.columns.dividers.indices.contains(column) {
             let tick =
-                model.dragPreview.flatMap { $0.target.column == column ? $0.columnTick : nil }
+                preview.flatMap { $0.target.column == column ? $0.columnTick : nil }
                 ?? Double(model.grid.columns.dividers[column])
             values.append(localization.text(.horizontalPosition(tick)))
         }
         if let row = target.row, model.grid.rows.dividers.indices.contains(row) {
             let tick =
-                model.dragPreview.flatMap { $0.target.row == row ? $0.rowTick : nil }
+                preview.flatMap { $0.target.row == row ? $0.rowTick : nil }
                 ?? Double(model.grid.rows.dividers[row])
             values.append(localization.text(.verticalPosition(tick)))
         }

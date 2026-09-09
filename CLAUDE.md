@@ -32,3 +32,16 @@ The localization hook compiled with both `InfoSpaceExamples` and the `InfoSpace`
 executable in Release (4.00 s and 1.22 s). `scripts/check.sh` and native window
 validation remain deferred until automation is resumed. No application was
 launched or activated for these builds.
+
+On 2026-09-10 automation was resumed. Continuous drag observation now ends at
+the canvas geometry layer; consumer factories do not rebuild for each pointer
+tick, while live resizing and host content updates remain enabled. Layout
+controls expose generic metrics, button-style and visibility/policy options.
+See docs/API.md and the compiled CustomizedWorkspaceExample.
+
+Validation: scripts/check.sh passed lint, 58 Swift tests, the examples and the
+Release build. scripts/build.sh -quiet passed. The dedicated native run passed
+56/56 checks and all 19 captures, including host-content isolation, live geometry,
+editor retention and styled native layout controls. Its 64-panel geometry-only
+projection averaged 123.3 microseconds; this is not a rendering FPS measurement.
+Private evidence is retained under .local/warp-surface/sdk-native-1.

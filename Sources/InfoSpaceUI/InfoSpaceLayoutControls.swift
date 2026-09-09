@@ -7,6 +7,7 @@ public struct InfoSpaceLayoutControls: View {
     private let model: InfoSpaceModel
     private let style: InfoSpaceStyle
     private let expansion: Binding<Bool>?
+    private let options: InfoSpaceLayoutControlOptions
     private let changeDimensions: ((Int, Int) -> Void)?
     @State private var locallyExpanded = true
     @State private var expandedWidth: CGFloat = 0
@@ -17,20 +18,32 @@ public struct InfoSpaceLayoutControls: View {
     /// Supply `onDimensionsChange` to implement a different policy, such as a dense demo preset.
     public init(
         model: InfoSpaceModel, style: InfoSpaceStyle = .init(), isExpanded: Binding<Bool>? = nil,
+        options: InfoSpaceLayoutControlOptions = .init(),
         onDimensionsChange: ((Int, Int) -> Void)? = nil
     ) {
         self.model = model
         self.style = style
         expansion = isExpanded
+        self.options = options
         changeDimensions = onDimensionsChange
     }
 
     private var isExpanded: Bool { expansion?.wrappedValue ?? locallyExpanded }
 
     public var body: some View {
+        Group {
+            if options.allowsCollapse { collapsibleControls } else { controls }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(style.theme.foreground)
+        .fixedSize(horizontal: true, vertical: false)
+        .accessibilityIdentifier("infospace-layout-controls")
+    }
+
+    private var collapsibleControls: some View {
         HStack(spacing: 0) {
             controls
-                .padding(.trailing, 8)
+                .padding(.trailing, style.controls.spacing)
                 .fixedSize()
                 .onGeometryChange(for: CGFloat.self) {
                     $0.size.width
@@ -49,48 +62,57 @@ public struct InfoSpaceLayoutControls: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .rotationEffect(.degrees(isExpanded ? 0 : 180))
-                    .font(.system(size: 11, weight: .semibold))
-                    .frame(width: 30, height: 30)
-                    .background(style.theme.controlBackground, in: RoundedRectangle(cornerRadius: 8))
+                    .font(style.controls.symbolFont)
+                    .frame(width: style.controls.controlSide, height: style.controls.controlSide)
+                    .background(controlBackground(selected: false))
                     .contentShape(.rect)
             }
             .help(localization.text(isExpanded ? .collapseLayoutControls : .expandLayoutControls))
             .accessibilityLabel(localization.text(isExpanded ? .collapseLayoutControls : .expandLayoutControls))
             .accessibilityValue(localization.text(isExpanded ? .expanded : .collapsed))
             .accessibilityIdentifier("toggle-layout-controls")
+            .modifier(SpaceControlAppearance(style: style.controls.buttonStyle))
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(style.theme.foreground)
-        .fixedSize(horizontal: true, vertical: false)
-        .accessibilityIdentifier("infospace-layout-controls")
     }
 
     private var controls: some View {
-        HStack(spacing: 14) {
-            HStack(spacing: 3) {
-                preset(rows: 2, columns: 2)
-                preset(rows: 2, columns: 4)
-                preset(rows: 3, columns: 4)
+        HStack(spacing: style.controls.groupSpacing) {
+            if options.showsPresets {
+                HStack(spacing: style.controls.presetPadding) {
+                    preset(rows: 2, columns: 2)
+                    preset(rows: 2, columns: 4)
+                    preset(rows: 3, columns: 4)
+                }
+                .padding(style.controls.presetPadding)
+                .background(
+                    style.theme.controlBackground, in: RoundedRectangle(cornerRadius: style.controls.cornerRadius))
             }
-            .padding(3)
-            .background(style.theme.controlBackground, in: RoundedRectangle(cornerRadius: 9))
             dimensionControl(localization.text(.rows), value: model.grid.rows.count, identifier: "rows", isRow: true)
             dimensionControl(
                 localization.text(.columns), value: model.grid.columns.count, identifier: "columns", isRow: false)
-            HStack(spacing: 6) {
-                controlButton("grid", title: localization.text(.showGrid), id: "toggle-grid", selected: model.showsGrid)
-                {
-                    model.showsGrid.toggle()
+            HStack(spacing: style.controls.controlSpacing) {
+                if options.showsGrid {
+                    controlButton(
+                        "grid", title: localization.text(.showGrid), id: "toggle-grid", selected: model.showsGrid
+                    ) {
+                        model.showsGrid.toggle()
+                    }
                 }
-                controlButton(
-                    "arrow.left.and.right.righttriangle.left.righttriangle.right",
-                    title: localization.text(.balanceRowsAndColumns), id: "balance"
-                ) { model.balance() }
-                .disabled(model.maximized != nil)
-                controlButton("arrow.uturn.backward", title: localization.text(.restoreAllSpaces), id: "restore-all") {
-                    model.restoreAll()
+                if options.showsBalance {
+                    controlButton(
+                        "arrow.left.and.right.righttriangle.left.righttriangle.right",
+                        title: localization.text(.balanceRowsAndColumns), id: "balance"
+                    ) { model.balance() }
+                    .disabled(model.maximized != nil)
                 }
-                .disabled(model.maximized == nil && model.minimized.isEmpty)
+                if options.showsRestoreAll {
+                    controlButton(
+                        "arrow.uturn.backward", title: localization.text(.restoreAllSpaces), id: "restore-all"
+                    ) {
+                        model.restoreAll()
+                    }
+                    .disabled(model.maximized == nil && model.minimized.isEmpty)
+                }
             }
         }
     }
@@ -100,31 +122,34 @@ public struct InfoSpaceLayoutControls: View {
         return Button {
             resize(rows: rows, columns: columns)
         } label: {
-            HStack(spacing: 5) {
-                LayoutGlyph(rows: rows, columns: columns).frame(width: 17, height: 13)
-                Text("\(rows) × \(columns)").font(.system(size: 11, weight: .medium, design: .monospaced))
+            HStack(spacing: style.controls.spacing) {
+                LayoutGlyph(rows: rows, columns: columns)
+                    .frame(width: style.controls.glyphSize.width, height: style.controls.glyphSize.height)
+                Text("\(rows) × \(columns)").font(style.controls.presetFont)
             }
             .foregroundStyle(selected ? style.theme.foreground : style.theme.secondaryForeground)
-            .padding(.horizontal, 8).frame(height: 28)
+            .padding(.horizontal, style.controls.presetInset).frame(height: style.controls.presetHeight)
             .background(
                 selected ? style.theme.selectedControlBackground : .clear,
-                in: RoundedRectangle(cornerRadius: 6)
+                in: RoundedRectangle(cornerRadius: style.controls.cornerRadius)
             )
             .contentShape(.rect)
         }
         .disabled(!canResize(rows: rows, columns: columns))
+        .modifier(SpaceControlAppearance(style: style.controls.buttonStyle))
         .accessibilityLabel(localization.text(.dimensions(rows: rows, columns: columns)))
         .accessibilityIdentifier("preset-\(rows)x\(columns)")
     }
 
     private func dimensionControl(_ title: String, value: Int, identifier: String, isRow: Bool) -> some View {
-        HStack(spacing: 5) {
-            Text(title).font(.system(size: 11)).foregroundStyle(style.theme.secondaryForeground)
+        HStack(spacing: style.controls.spacing) {
+            Text(title).font(style.controls.font).foregroundStyle(style.theme.secondaryForeground)
             dimensionButton(value: value - 1, identifier: identifier, isRow: isRow, increasing: false)
-            Text("\(value)").font(.system(size: 12, weight: .medium, design: .monospaced)).frame(width: 12)
+            Text("\(value)").font(style.controls.valueFont).frame(minWidth: style.controls.valueWidth)
                 .contentTransition(.numericText())
             dimensionButton(value: value + 1, identifier: identifier, isRow: isRow, increasing: true)
         }
+        .accessibilityIdentifier("infospace-layout-\(identifier)")
     }
 
     private func dimensionButton(value: Int, identifier: String, isRow: Bool, increasing: Bool) -> some View {
@@ -134,10 +159,12 @@ public struct InfoSpaceLayoutControls: View {
             resize(rows: rows, columns: columns)
         } label: {
             Image(systemName: increasing ? "plus" : "minus")
-                .font(.system(size: 9, weight: .semibold)).frame(width: 18, height: 24)
+                .font(style.controls.dimensionSymbolFont)
+                .frame(width: style.controls.dimensionSize.width, height: style.controls.dimensionSize.height)
                 .contentShape(.rect)
         }
         .disabled(!canResize(rows: rows, columns: columns))
+        .modifier(SpaceControlAppearance(style: style.controls.buttonStyle))
         .accessibilityLabel(
             localization.text(
                 isRow
@@ -148,8 +175,11 @@ public struct InfoSpaceLayoutControls: View {
     }
 
     private func canResize(rows: Int, columns: Int) -> Bool {
-        SnapAxis.supportedCounts.contains(rows) && SnapAxis.supportedCounts.contains(columns)
-            && (changeDimensions != nil || rows * columns >= model.spaces.count)
+        guard SnapAxis.supportedCounts.contains(rows), SnapAxis.supportedCounts.contains(columns),
+            options.canChangeDimensions?(rows, columns) ?? true
+        else { return false }
+        if changeDimensions != nil { return true }
+        return (try? model.layout.applying(.resize(rows: rows, columns: columns))) != nil
     }
 
     private func resize(rows: Int, columns: Int) {
@@ -168,14 +198,21 @@ public struct InfoSpaceLayoutControls: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 13)).frame(width: 30, height: 30)
-                .background(
-                    selected ? style.theme.selectedControlBackground : style.theme.controlBackground,
-                    in: RoundedRectangle(cornerRadius: 8)
-                )
+            Image(systemName: symbol).font(style.controls.symbolFont)
+                .frame(width: style.controls.controlSide, height: style.controls.controlSide)
+                .background(controlBackground(selected: selected))
                 .contentShape(.rect)
         }
         .help(title).accessibilityLabel(title).accessibilityIdentifier(id)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .modifier(SpaceControlAppearance(style: style.controls.buttonStyle))
+    }
+
+    @ViewBuilder private func controlBackground(selected: Bool) -> some View {
+        if style.controls.buttonStyle == nil || selected {
+            RoundedRectangle(cornerRadius: style.controls.cornerRadius)
+                .fill(selected ? style.theme.selectedControlBackground : style.theme.controlBackground)
+        }
     }
 }
 

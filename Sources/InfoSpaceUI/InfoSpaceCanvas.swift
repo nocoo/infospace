@@ -15,7 +15,6 @@ public struct InfoSpaceCanvas<Content: View>: View {
     private var handleContent: ((SpaceHandleContext) -> AnyView)?
     private var overlayContent: ((SpacePanelContext) -> AnyView)?
     @Namespace private var coordinateSpace
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         model: InfoSpaceModel, style: InfoSpaceStyle = .init(),
@@ -31,58 +30,31 @@ public struct InfoSpaceCanvas<Content: View>: View {
     }
 
     public var body: some View {
-        GeometryReader { proxy in
-            let geometry = SpaceGeometry(
-                layout: model.layout, minimized: model.minimized,
-                maximized: model.maximized, size: proxy.size,
-                dragPreview: model.dragPreview, metrics: style.layout)
-            ZStack(alignment: .topLeading) {
-                if model.visibleCount == 0, let emptyContent {
-                    emptyContent().frame(width: geometry.gridFrame.width, height: geometry.gridFrame.height)
-                }
-                if let emptyCellContent {
-                    ForEach(geometry.emptyCells, id: \.position) { cell in
-                        emptyCellContent(cell.position)
-                            .frame(width: cell.frame.width, height: cell.frame.height)
-                            .position(x: cell.frame.midX, y: cell.frame.midY)
-                    }
-                }
-                if let shelf = geometry.shelfFrame {
-                    Rectangle().fill(style.theme.border)
-                        .frame(width: shelf.width, height: 1)
-                        .position(x: shelf.midX, y: shelf.minY - min(9, style.layout.shelfSpacing / 2))
-                        .allowsHitTesting(false)
-                }
-                ForEach(geometry.placements, id: \.space) { placement in
-                    panel(placement)
-                }
-                SnapGridOverlay(color: style.theme.grid)
-                    .frame(width: geometry.gridFrame.width, height: geometry.gridFrame.height)
-                    .opacity((model.showsGrid || model.activeDivider != nil) && model.maximized == nil ? 1 : 0)
-                    .animation(.easeOut(duration: reduceMotion ? 0 : 0.15), value: model.activeDivider != nil)
-                    .allowsHitTesting(false).accessibilityHidden(true)
-                    .zIndex(2)
-                ForEach(geometry.dividers) { divider in
-                    handle(divider.target, gridSize: geometry.gridFrame.size)
-                        .frame(width: divider.frame.width, height: divider.frame.height)
-                        .position(x: divider.frame.midX, y: divider.frame.midY)
-                        .accessibilityIdentifier(divider.id)
-                        .zIndex(3)
-                }
-                ForEach(geometry.intersections) { intersection in
-                    handle(intersection.target, gridSize: geometry.gridFrame.size)
-                        .frame(width: 26, height: 26)
-                        .position(intersection.center)
-                        .accessibilityIdentifier(intersection.id)
-                        .zIndex(4)
-                }
-            }
-            .coordinateSpace(name: coordinateSpace)
-            .animation(reduceMotion ? nil : style.motion.layout, value: model.presentationRevision)
-            .clipped()
-        }
+        // Only this geometry layer observes pointer positions. The content value
+        // is built outside it, so a drag never invokes the host's Panel factory.
+        InfoSpaceCanvasGeometry(
+            model: model, style: style, coordinateSpace: coordinateSpace,
+            panels: panels, emptyContent: emptyContent, emptyCellContent: emptyCellContent,
+            handleContent: handleContent
+        )
         .background(style.theme.background)
         .accessibilityIdentifier("infospace-canvas")
+    }
+
+    private var panels: some View {
+        ForEach(model.spaces, id: \.self) { space in
+            let isBanner = model.maximized.map { $0 != space } ?? model.minimized.contains(space)
+            InfoSpaceCanvasPanel(
+                space: space, appearance: appearance(space), style: style.panel,
+                actions: actions(space), isBanner: isBanner, isMaximized: model.maximized == space,
+                restore: { model.restore(space) }, maximize: { model.maximize(space) },
+                minimize: { model.minimize(space) }, content: content(space),
+                bannerContent: bannerContent, overlayContent: overlayContent
+            )
+            .layoutValue(key: InfoSpacePlacementKey.self, value: space)
+            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            .zIndex(isBanner ? 1 : 0)
+        }
     }
 
     /// Replace the edge banner. The context provides the restore action.
@@ -117,43 +89,4 @@ public struct InfoSpaceCanvas<Content: View>: View {
         return copy
     }
 
-    private func panel(_ placement: SpacePlacement) -> some View {
-        SpacePanel(
-            space: placement.space, appearance: appearance(placement.space), style: style.panel,
-            actions: actions(placement.space), isBanner: placement.isBanner,
-            isMaximized: model.maximized == placement.space, size: placement.frame.size,
-            restore: { model.restore(placement.space) }, maximize: { model.maximize(placement.space) },
-            minimize: { model.minimize(placement.space) }, content: content(placement.space),
-            bannerContent: bannerContent, overlayContent: overlayContent
-        )
-        .frame(width: placement.frame.width, height: placement.frame.height)
-        .position(x: placement.frame.midX, y: placement.frame.midY)
-        .transition(.opacity.combined(with: .scale(scale: 0.96)))
-        .zIndex(placement.isBanner ? 1 : 0)
-    }
-
-    private func handle(_ target: DividerTarget, gridSize: CGSize) -> some View {
-        SpaceResizeHandle(
-            model: model, target: target, gridSize: gridSize, coordinateSpace: coordinateSpace,
-            style: style, customContent: handleContent)
-    }
-}
-
-private struct SnapGridOverlay: View {
-    let color: Color
-
-    var body: some View {
-        Canvas { context, size in
-            var path = Path()
-            for step in 1..<SnapAxis.resolution {
-                let x = size.width * CGFloat(step) / CGFloat(SnapAxis.resolution)
-                let y = size.height * CGFloat(step) / CGFloat(SnapAxis.resolution)
-                path.move(to: CGPoint(x: x, y: 0))
-                path.addLine(to: CGPoint(x: x, y: size.height))
-                path.move(to: CGPoint(x: 0, y: y))
-                path.addLine(to: CGPoint(x: size.width, y: y))
-            }
-            context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 0.5, dash: [2, 4]))
-        }
-    }
 }

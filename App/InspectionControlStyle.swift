@@ -51,6 +51,31 @@ extension InspectionSession {
             compact.count == 1 && compact.allSatisfy { $0.bounds.size == CGSize(width: 40, height: 40) }
         captures["13-host-compact-control"] = await capture(
             hosted, to: directory.appending(path: "13-host-compact-control.png"))
+        await inspectLayoutControlStyle(hosted: hosted, sample: sample, probe: probe)
+    }
+
+    private func inspectLayoutControlStyle(
+        hosted: NSWindow, sample: InfoSpaceModel, probe: ControlStyleProbe
+    ) async {
+        probe.views = []
+        hosted.setContentSize(CGSize(width: 700, height: 160))
+        var dockStyle = InfoSpaceStyle(theme: .light)
+        dockStyle.controls.controlSide = 40
+        dockStyle.controls.dimensionSize = CGSize(width: 40, height: 40)
+        dockStyle.controls.buttonStyle = SpaceControlButtonStyle(InspectionControlStyle(probe: probe))
+        hosted.contentView = NSHostingView(
+            rootView:
+                InfoSpaceLayoutControls(
+                    model: sample, style: dockStyle,
+                    options: .init(allowsCollapse: false, showsPresets: false)
+                )
+                .controlSize(.large))
+        await settle(200)
+        let dock = probe.views.compactMap(\.view).filter { $0.window === hosted }
+        checks["layout-controls-use-host-size-and-feedback"] =
+            dock.count == 7
+            && dock.allSatisfy { $0.bounds.size == CGSize(width: 40, height: 40) && $0.largeControls }
+        checks["layout-controls-keep-boundary-actions-disabled"] = dock.filter { !$0.enabled }.count == 3
     }
 
     private func controlStyleCanvas(model: InfoSpaceModel, probe: ControlStyleProbe) -> some View {

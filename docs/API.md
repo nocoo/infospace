@@ -10,7 +10,7 @@ Info Space provides two library products: `InfoSpaceCore` and `InfoSpaceUI`. The
 | `InfoSpaceWorkspace` | The canvas with optional top, bottom, leading and trailing regions, configurable padding and spacing. This is a regular SwiftUI `View`. |
 | `InfoSpaceWindow` | An optional native `Scene` with a unified header, screen-relative launch size, centering and configurable window background. |
 | `InfoSpaceToolbar` | A native toolbar with a custom brand, up to three adjacent actions, and a custom trailing view. |
-| `InfoSpaceLayoutControls` | Optional row/column, preset, grid and restore controls with an animated collapse button. Use them in a toolbar or any workspace region. |
+| `InfoSpaceLayoutControls` | Reusable row/column, preset, grid, balance and restore controls. Hosts choose the visible groups, metrics and button feedback, with an optional animated collapse button. |
 | `InfoSpaceFooter` | Optional leading and trailing content slots aligned to the two edges of the workspace. |
 
 The [embedded grid](../Examples/EmbeddedGridExample.swift), [custom workspace](../Examples/CustomizedWorkspaceExample.swift) and [full window](../Examples/WorkspaceWindowExample.swift) examples are compiled by `swift build --target InfoSpaceExamples`.
@@ -122,6 +122,39 @@ Hosts can map their design tokens into `SpacePanelStyle.titleFont`, `bannerTitle
 
 Set `style.panel.controlButtonStyle = SpaceControlButtonStyle(MyButtonStyle())` to reuse a host's standard hover, press, selection and disabled feedback on built-in actions, custom actions and overflow menus. The supplied SwiftUI `ButtonStyle` receives the original configuration and inherited environment, including enabled state and Reduce Motion. It owns the control background; the SDK does not paint a second fill beneath it. Keep sizing in `SpacePanelStyle` so overflow decisions use the actual hit targets. A nil override keeps the SDK's default appearance. The SDK still owns actions, roles, identifiers and keyboard/accessibility behavior; this hook does not replace business commands.
 
+### Reusable layout controls
+
+Map the host's already resolved fonts, spacing and hit targets into
+`style.controls: InfoSpaceLayoutControlStyle`. Its `buttonStyle` uses the same
+`SpaceControlButtonStyle` hook as panel actions. The SDK retains its native
+buttons, labels, disabled boundaries and model commands; a host does not need to
+copy the dimension selector to apply its own appearance.
+
+`InfoSpaceLayoutControlOptions` selects presets, grid, balance and restore groups.
+Set `allowsCollapse: false` for an always visible dock. Optional
+`canChangeDimensions` adds host restrictions to the SDK's validation, including
+spanning and protected spaces. It cannot bypass that validation. Supplying
+`onDimensionsChange` still opts into the caller's own resize policy, as in the
+dense-demo example above.
+
+```swift
+var style = InfoSpaceStyle()
+style.controls.controlSide = 40
+style.controls.dimensionSize = CGSize(width: 40, height: 40)
+style.controls.font = .body
+style.controls.buttonStyle = SpaceControlButtonStyle(MyButtonStyle())
+
+InfoSpaceLayoutControls(
+    model: model, style: style,
+    options: .init(allowsCollapse: false, showsPresets: false,
+                   canChangeDimensions: { _, columns in columns >= 2 }))
+```
+
+Buttons keep stable accessibility identifiers such as `increase-rows`,
+`decrease-columns`, `balance`, `toggle-grid` and `restore-all`. Dimension groups
+are `infospace-layout-rows` and `infospace-layout-columns`. These controls may
+live in any workspace region; placement is a host concern.
+
 ### Host localization
 
 Apply `.infoSpaceLocalization(InfoSpaceLocalization { text in ... })` to a common
@@ -176,4 +209,18 @@ Share one `InfoSpaceStyle` across the canvas, workspace and toolbar. `InfoSpaceT
 
 `InfoSpaceMotion` configures structural transitions, release snapping and toolbar animation. Use `.none` to disable them. The canvas and controls respect the system's Reduce Motion setting. Drag tracking is immediate, without queuing animations for pointer events.
 
-The grid performs one geometry projection for all panels and uses one SwiftUI `Canvas` for the grid overlay. Each embedded canvas has its own gesture coordinate space. Content stays strongly typed; type erasure is limited to optional replacement slots. Stable IDs and lightweight content views avoid unnecessary work during drags. Expensive content still receives live size changes; snapshot freezing is not implemented. Measure rendering with the content you intend to host. The included geometry benchmark does not measure display frame rate.
+The grid performs one geometry projection for all panels and uses one SwiftUI
+`Canvas` for the grid overlay. Each embedded canvas has its own gesture coordinate
+space. A dedicated geometry view observes continuous pointer positions and passes
+proposals through a SwiftUI `Layout`; host content factories remain outside that
+observation boundary. `activeDivider` changes only when a gesture starts or ends,
+so inactive handle observers do not invalidate on every pointer tick. Content
+stays strongly typed; type erasure is limited to optional replacement slots.
+
+Panels still receive live size proposals and reflow while dragging. Host content
+and environment changes remain observable without requiring a layout revision;
+there is no equality gate, screenshot freezing or delayed release-only resize.
+Stable IDs preserve local editors during movement and presentation changes.
+Measure rendering with the content you intend to host. The included geometry
+benchmark excludes SwiftUI layout and does not measure display frame rate; native
+window checks separately verify content-factory isolation and continuous resize.

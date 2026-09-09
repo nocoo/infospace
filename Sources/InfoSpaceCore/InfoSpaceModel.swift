@@ -17,7 +17,8 @@ public final class InfoSpaceModel {
     public internal(set) var maximized: SpaceID?
     public var showsGrid = false
     public internal(set) var dragPreview: DividerPreview?
-    public var activeDivider: DividerTarget? { dragPreview?.target }
+    /// Target changes only at gesture boundaries; chrome need not observe every pointer tick.
+    public private(set) var activeDivider: DividerTarget?
 
     public init(rows: Int = 2, columns: Int = 2, fillEmptyCells: Bool = true) {
         layout = SpaceLayout(rows: rows, columns: columns, fillEmptyCells: fillEmptyCells)
@@ -68,6 +69,7 @@ public final class InfoSpaceModel {
             target.column.map({ grid.columns.dividers.indices.contains($0) }) ?? true,
             target.row.map({ grid.rows.dividers.indices.contains($0) }) ?? true
         else { return }
+        activeDivider = target
         dragPreview = DividerPreview(
             target: target,
             columnTick: target.column.map { Double(grid.columns.dividers[$0]) },
@@ -116,7 +118,10 @@ public final class InfoSpaceModel {
             rowTick: preview.rowTick.map { Int($0.rounded()) })
     }
 
-    public func cancelDrag() { dragPreview = nil }
+    public func cancelDrag() {
+        dragPreview = nil
+        activeDivider = nil
+    }
 
     public func maximize(_ space: SpaceID) { perform(.maximize(space)) }
     public func minimize(_ space: SpaceID) { perform(.minimize(space)) }
