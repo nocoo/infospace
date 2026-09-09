@@ -75,6 +75,37 @@ Dragging follows the pointer continuously, including within a grid cell. Only re
 
 ## Panels
 
+`SpaceEntry` accepts `span: .cell`, `.rectangle(rows:columns:)`,
+`.fullHeight(columns:)` or `.fullWidth(rows:)`. Full-axis spans start at row or
+column zero and grow with their grid. Every covered cell participates in collision
+and capacity validation. `space(at:)` returns the occupant of any covered cell.
+`allowsMove: false` and `allowsRemoval: false` protect stable entries in all layout
+commands and snapshot restoration. Minimize, maximize and restore stay available.
+Spanning layouts share tracks to prevent overlapping panels; a track containing
+only minimized panels collapses. A partly minimized track stays reserved.
+
+`SpaceLayout.applying(_:)` accepts typed `SpaceLayoutCommand` values, independently
+of a View or MainActor. Batches validate on copies and fail atomically. The model's
+insert/move/remove/resize/proportion methods use these same commands. The older
+`setDimensions` dense-demo policy also validates protection and reports a rejected
+change in `lastError`; hosts should prefer preserving `resizeGrid`.
+
+`SpaceSnapshot` v1 persists layout, minimized IDs, focus and a monotonic revision.
+Its decoder validates grid ticks, spans, duplicate IDs, occupancy and presentation
+references. Unsupported or invalid snapshots throw; hosts retain their original
+bytes for recovery. `snapshot.applying(command, expectedRevision:)` provides
+revision checks and atomic structural/presentation changes. `.restoreSnapshot`
+implements validated undo at a **new** revision without weakening protection.
+
+By default `InfoSpaceModel` commits synchronously. A host needing persistence
+sets `commandHandler` to receive `(SpaceCommand, expectedRevision)`. All canvas
+actions then propose commands without installing optimistic state. The host
+validates/persists with its single owner and calls `model.install(accepted)` on
+MainActor. Rejecting a command leaves the committed model unchanged; old revisions
+cannot be installed. The host reports commit failures and serializes concurrent
+requests. Drag previews are transient, never part of a snapshot. Divider-only
+commits do not start a structural animation. See `ProtectedWorkspaceExample`.
+
 The required header shows an SF Symbol and a title from `SpaceAppearance`. Its two rightmost buttons remain minimize and maximize/restore. `SpaceAction` values add custom buttons immediately before them. Give actions unique, stable IDs. Additional actions move into an overflow menu when the panel is narrow; extremely small panels put all actions in a compact menu.
 
 ```swift

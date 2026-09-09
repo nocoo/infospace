@@ -1,7 +1,7 @@
 import Foundation
 
 /// Committed positions are integer grid ticks; drag previews may use fractional ticks.
-public struct SnapAxis: Equatable, Sendable {
+public struct SnapAxis: Codable, Equatable, Sendable {
     public static let resolution = 32
     public static let minimumSpan = 2
     public static let supportedCounts = 1...8
@@ -13,6 +13,19 @@ public struct SnapAxis: Equatable, Sendable {
     public init(count: Int) {
         let count = min(Self.supportedCounts.upperBound, max(Self.supportedCounts.lowerBound, count))
         dividers = (1..<count).map { Int((Double($0) * Double(Self.resolution) / Double(count)).rounded()) }
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let ticks = try values.decode([Int].self, forKey: .dividers)
+        guard ticks.count < Self.supportedCounts.upperBound,
+            ticks.allSatisfy({ (Self.minimumSpan...(Self.resolution - Self.minimumSpan)).contains($0) })
+        else { throw InfoSpaceError.invalidProportions }
+        let stops = [0] + ticks + [Self.resolution]
+        guard zip(stops, stops.dropFirst()).allSatisfy({ $1 - $0 >= Self.minimumSpan }) else {
+            throw InfoSpaceError.invalidProportions
+        }
+        dividers = ticks
     }
 
     public init(proportions: [Double]) throws {
