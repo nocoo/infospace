@@ -7,6 +7,8 @@
 
 <p align="center"><img src="images/workspace.png" width="720" alt="Info Space panels, native toolbar and custom footer" /></p>
 
+https://github.com/user-attachments/assets/cbb5385d-39bf-4d90-93ef-5ed1866b663d
+
 ## What it does
 
 Info Space is a SwiftUI workspace SDK for macOS app developers, with a runnable demo app. It arranges information panels in a grid, lets you adjust proportions by dragging dividers or intersections, and supports minimizing panels or maximizing one of them.

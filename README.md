@@ -7,6 +7,8 @@
 
 <p align="center"><img src="docs/images/workspace.png" width="720" alt="Info Space 的信息面板、原生工具栏和自定义页脚" /></p>
 
+https://github.com/user-attachments/assets/cbb5385d-39bf-4d90-93ef-5ed1866b663d
+
 ## 这是什么
 
 Info Space 是面向 macOS 应用开发者的 SwiftUI 工作区 SDK，附带一个可运行的演示应用。它把多个信息面板放进同一网格，通过拖动分隔线或交叉点调整比例，也可以收起面板或最大化其中一个。
