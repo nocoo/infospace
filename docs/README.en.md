@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../logo.svg" width="128" height="128" alt="Info Space logo" />
+  <img src="../assets/brand/icon-rounded.png" width="128" height="128" alt="Info Space logo" />
 </p>
 <h1 align="center">Info Space</h1>
 <p align="center">Organize information panels in a macOS app and drag dividers to adjust the layout.</p>

@@ -14,7 +14,12 @@ let package = Package(
         .target(name: "InfoSpaceUI", dependencies: ["InfoSpaceCore"]),
         .executableTarget(
             name: "InfoSpaceApp", dependencies: ["InfoSpaceCore", "InfoSpaceUI"], path: "App",
-            exclude: ["Info.plist"]),
+            exclude: ["Info.plist"],
+            resources: [
+                .copy("Resources/ToolbarMark.png"),
+                .copy("Resources/ToolbarMark@2x.png"),
+                .copy("Resources/AppIcon.icns"),
+            ]),
         .target(name: "InfoSpaceExamples", dependencies: ["InfoSpaceCore", "InfoSpaceUI"], path: "Examples"),
         .testTarget(name: "InfoSpaceCoreTests", dependencies: ["InfoSpaceCore"]),
     ],

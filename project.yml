@@ -23,6 +23,10 @@ targets:
     platform: macOS
     sources:
       - path: App
+        excludes:
+          - Resources
+      - path: App/Resources
+        buildPhase: resources
     dependencies:
       - package: InfoSpace
         product: InfoSpaceCore
@@ -32,6 +36,7 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Info Space
+        CFBundleIconFile: AppIcon
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity

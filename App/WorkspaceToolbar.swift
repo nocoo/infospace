@@ -39,15 +39,13 @@ struct WorkspaceToolbar: ToolbarContent {
 
 private struct SpaceMark: View {
     var body: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 2) {
-                RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.58, green: 0.64, blue: 1))
-                RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.46, green: 0.76, blue: 0.67))
-            }
-            HStack(spacing: 2) {
-                RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.90, green: 0.60, blue: 0.44))
-                RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.73, green: 0.59, blue: 0.89))
-            }
+        if let image = AppResources.toolbarMark {
+            Image(nsImage: image)
+                .renderingMode(.original)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .accessibilityHidden(true)
         }
     }
 }

@@ -49,6 +49,9 @@ struct InfoSpaceApp: App {
 final class ApplicationLifecycle: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        #if SWIFT_PACKAGE
+        if let icon = AppResources.applicationIcon { NSApp.applicationIconImage = icon }
+        #endif
         NSApp.activate(ignoringOtherApps: true)
     }
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" width="128" height="128" alt="Info Space logo" />
+  <img src="assets/brand/icon-rounded.png" width="128" height="128" alt="Info Space logo" />
 </p>
 <h1 align="center">Info Space</h1>
 <p align="center">在 macOS 应用中组织信息面板，拖动分隔线调整布局。</p>

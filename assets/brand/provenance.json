@@ -1,0 +1,49 @@
+{
+  "study": "infospace/2026-09-09-01",
+  "finishing": "01",
+  "archive": "https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/infospace/2026-09-09-01",
+  "rawSha256": "f35f20b193b21bbe25cb6d2ab77412cb7051ed35de8e154249407a8735ece727",
+  "decision": "Owner approved the displayed untouched image and authorized complete replacement and publication on 2026-09-09.",
+  "files": [
+    {
+      "path": "logo.png",
+      "bytes": 4365206,
+      "sha256": "3b2e9aaead0eddccf8bf2212fe96f5ed207a06dc6111f72a829dd2db0a656772"
+    },
+    {
+      "path": "assets/brand/icon.png",
+      "bytes": 5695056,
+      "sha256": "b3f2b7defe36075d7259b6a8c62a83959589c16f85b93946f4e8c525eaa385f5"
+    },
+    {
+      "path": "assets/brand/icon-rounded.png",
+      "bytes": 5624848,
+      "sha256": "b59a0ac6ce87612f63445587bdcb1e1c5aabd559ddbdb57cdb63d9fe69eb99d4"
+    },
+    {
+      "path": "assets/brand/macos-icon.png",
+      "bytes": 762312,
+      "sha256": "b97ec08f1cb5458c88749615db19ab500dee8a1038975e00a2d90da60dcaef89"
+    },
+    {
+      "path": "App/Resources/ToolbarMark.png",
+      "bytes": 1055,
+      "sha256": "fce7de869b502e591f45d2ea91515b912b021aa73dea39d684495fab02cc6061"
+    },
+    {
+      "path": "App/Resources/ToolbarMark@2x.png",
+      "bytes": 2875,
+      "sha256": "7df1b7d14c23b78c01c55ef826604863d812af4a10b54ab4eb1079c85cf3aeba"
+    },
+    {
+      "path": "App/Resources/AppIcon.icns",
+      "bytes": 1325295,
+      "sha256": "de29a90e29d8b52f163b6a5cbb657d5931478d31bc3c1e760f3dba62f9861b3a"
+    }
+  ],
+  "previous": {
+    "path": "logo.svg",
+    "sha256": "7540789c41a74c8553af6fe38b23aa3784753259038ff93dc8e7797f17582d03",
+    "usage": "Historical source; active consumers use the selected bitmap identity."
+  }
+}
