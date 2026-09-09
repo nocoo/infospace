@@ -81,6 +81,27 @@ public struct SpacePanelStyle {
     public var compactContentPadding: CGFloat = 14
     public var minimumContentSize = CGSize(width: 100, height: 100)
     public var borderWidth: CGFloat = 1
+    /// Hosts resolve these fonts from their own reading-size setting. Explicit
+    /// fonts avoid relying on an inherited font that panel chrome would override.
+    public var titleFont: Font = .system(size: 13, weight: .semibold)
+    public var bannerTitleFont: Font = .system(size: 12, weight: .semibold)
+    public var symbolFont: Font = .system(size: 14, weight: .medium)
+    public var bannerSymbolFont: Font = .system(size: 12, weight: .medium)
+    public var actionFont: Font = .system(size: 11, weight: .semibold)
+    public var controlSide: CGFloat = 26
+    public var controlCornerRadius: CGFloat = 6
+    public var controlSpacing: CGFloat = 3
+    public var headerSpacing: CGFloat = 9
+    public var headerHorizontalPadding: CGFloat = 16
+    public var compactHeaderHorizontalPadding: CGFloat = 8
+    public var bannerHorizontalPadding: CGFloat = 12
+    public var contentHeaderOverlap: CGFloat = 6
+
+    /// Preserve the default action-overflow boundary, while reserving room for
+    /// enlarged hit targets before deciding to show additional inline actions.
+    public func inlineActionsMinimumWidth(count: Int) -> CGFloat {
+        220 + max(0, controlSide - 26) * 2 + CGFloat(max(0, count)) * (controlSide + controlSpacing)
+    }
 
     public init() {}
 }

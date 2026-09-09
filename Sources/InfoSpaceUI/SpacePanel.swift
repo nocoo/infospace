@@ -22,7 +22,7 @@ struct SpacePanel<Content: View>: View {
         !isBanner && size.width >= style.minimumContentSize.width && size.height >= style.minimumContentSize.height
     }
     private var usesCompactMenu: Bool { size.width < 130 || size.height < 40 }
-    private var showsInlineActions: Bool { size.width >= 220 + CGFloat(actions.count) * 29 }
+    private var showsInlineActions: Bool { size.width >= style.inlineActionsMinimumWidth(count: actions.count) }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -31,7 +31,7 @@ struct SpacePanel<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(size.width < 220 ? style.compactContentPadding : style.contentPadding)
-                .padding(.top, max(0, style.headerHeight - 6))
+                .padding(.top, max(0, style.headerHeight - style.contentHeaderOverlap))
                 .opacity(showsContent ? 1 : 0)
                 .allowsHitTesting(showsContent)
                 .disabled(!showsContent)
@@ -41,7 +41,12 @@ struct SpacePanel<Content: View>: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 header
-                    .padding(.horizontal, isBanner ? 12 : size.width < 130 ? 8 : 16)
+                    .padding(
+                        .horizontal,
+                        isBanner
+                            ? style.bannerHorizontalPadding
+                            : size.width < 130 ? style.compactHeaderHorizontalPadding : style.headerHorizontalPadding
+                    )
                     .frame(height: isBanner ? size.height : min(style.headerHeight, size.height))
                     .background(appearance.headerBackground)
                 if isBanner { bannerButton }
@@ -81,13 +86,13 @@ struct SpacePanel<Content: View>: View {
     }
 
     private var header: some View {
-        HStack(spacing: 9) {
-            HStack(spacing: 9) {
+        HStack(spacing: style.headerSpacing) {
+            HStack(spacing: style.headerSpacing) {
                 Image(systemName: appearance.symbol)
-                    .font(.system(size: isBanner ? 12 : 14, weight: .medium))
+                    .font(isBanner ? style.bannerSymbolFont : style.symbolFont)
                     .foregroundStyle(appearance.foregroundColor.opacity(0.8))
                 Text(appearance.title)
-                    .font(.system(size: isBanner ? 12 : 13, weight: .semibold))
+                    .font(isBanner ? style.bannerTitleFont : style.titleFont)
                     .lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 0)
             }
@@ -95,11 +100,11 @@ struct SpacePanel<Content: View>: View {
             .onTapGesture(count: 2) { if !isBanner { maximize() } }
             if isBanner {
                 Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 11, weight: .medium)).opacity(hovered ? 1 : 0.55)
+                    .font(style.actionFont).opacity(hovered ? 1 : 0.55)
             } else if usesCompactMenu {
                 compactMenu
             } else {
-                HStack(spacing: 3) {
+                HStack(spacing: style.controlSpacing) {
                     additionalButtons
                     panelButton("minus", title: "Minimize \(appearance.title)", id: "minimize", action: minimize)
                     panelButton(
@@ -136,11 +141,11 @@ struct SpacePanel<Content: View>: View {
             if !actions.isEmpty { Divider() }
             builtInMenuActions
         } label: {
-            Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold))
-                .frame(width: 22, height: min(26, max(16, size.height - 4)))
+            Image(systemName: "ellipsis").font(style.actionFont)
+                .frame(width: max(22, style.controlSide - 4), height: min(style.controlSide, max(16, size.height - 4)))
                 .background(
                     appearance.controlBackground ?? appearance.foregroundColor.opacity(0.1),
-                    in: RoundedRectangle(cornerRadius: 5))
+                    in: RoundedRectangle(cornerRadius: style.controlCornerRadius))
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
         .accessibilityLabel("Actions for \(appearance.title)")
@@ -173,11 +178,11 @@ struct SpacePanel<Content: View>: View {
     }
 
     private func actionIcon(_ symbol: String) -> some View {
-        Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
-            .frame(width: 26, height: 26)
+        Image(systemName: symbol).font(style.actionFont)
+            .frame(width: style.controlSide, height: style.controlSide)
             .background(
                 appearance.controlBackground ?? appearance.foregroundColor.opacity(hovered ? 0.14 : 0.075),
-                in: RoundedRectangle(cornerRadius: 6)
+                in: RoundedRectangle(cornerRadius: style.controlCornerRadius)
             )
             .contentShape(.rect)
     }

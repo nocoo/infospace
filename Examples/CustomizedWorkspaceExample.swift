@@ -14,6 +14,13 @@ struct CustomizedWorkspaceExample: View {
         style.layout.gutter = 12
         style.panel.cornerRadius = 18
         style.panel.headerHeight = 52
+        style.panel.titleFont = .system(size: 18, weight: .semibold)
+        style.panel.bannerTitleFont = .system(size: 16, weight: .semibold)
+        style.panel.symbolFont = .system(size: 20)
+        style.panel.actionFont = .system(size: 16)
+        style.panel.controlSide = 40
+        style.panel.controlSpacing = 4
+        style.panel.contentHeaderOverlap = 0
         return style
     }
 

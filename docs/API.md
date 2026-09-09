@@ -118,6 +118,8 @@ Pass an `actions: (SpaceID) -> [SpaceAction]` closure to the canvas or workspace
 
 `SpaceAppearance` controls the panel title, icon, background color, foreground, header background, control background and border. Disable `usesGradient` for a solid fill, or supply `customBackground: AnyShapeStyle`. `SpacePanelStyle` controls header height, corner radii, content padding, border width and the size threshold below which content is hidden. Hidden content remains mounted.
 
+Hosts can map their design tokens into `SpacePanelStyle.titleFont`, `bannerTitleFont`, `symbolFont`, `bannerSymbolFont` and `actionFont`. Pass fonts already resolved for the host's reading size; the SDK does not own a second appearance preference. `controlSide`, `controlCornerRadius`, `controlSpacing`, `headerSpacing` and the three horizontal padding fields control chrome geometry. Set `headerHeight` to fit the largest font/control, and `contentHeaderOverlap = 0` when content must begin strictly below the header. Enlarging `controlSide` also increases the width required for inline custom actions, so controls move into the existing overflow menu sooner. Very small panels still use compact actions and banners; they do not force the panel wider than its grid track. See the compiled `CustomizedWorkspaceExample` for a 40 pt control configuration.
+
 The canvas also accepts custom builders:
 
 | Builder | Context |
