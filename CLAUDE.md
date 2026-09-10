@@ -73,3 +73,11 @@ its dedicated PID; input checks still assert an active key window and actual
 effects. The earlier timeout in content-viewport-native remains preserved.
 Private evidence is under .local/workspace-audit. The third run's 64-panel
 geometry projection averaged 122.6 microseconds, excluding rendering.
+
+The outer workspace also uses a viewport sizing boundary, so speculative parent
+size/alignment queries do not descend into every region and panel. Actual
+placement retains ordinary region sizing. This increment passed lint, all
+58 tests/eight suites, examples, Release/Debug builds and 62/62 native checks
+with every capture in .local/workspace-audit/workspace-viewport-native. Footer
+geometry, live resizing, editor identity and hidden viewports remain covered.
+The 122.2-microsecond geometry projection still excludes consumer rendering.

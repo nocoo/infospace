@@ -33,6 +33,11 @@ InfoSpaceWorkspace(canvas: canvas, regions: regions)
 
 The footer inherits theme colors and provides configurable minimum height and spacing. Its content remains ordinary SwiftUI, so callers can apply their own fonts, colors and layouts. The workspace also has a general `canvas` view-builder initializer for applying host modifiers or wrapping the grid before embedding it.
 
+The workspace fills its allocated viewport. Its outer sizing boundary does not
+measure the canvas or regions during speculative ancestor sizing or alignment
+queries; the regions receive their usual layout during actual placement. Give
+the workspace a bounded frame when embedding it in a scrolling parent.
+
 ## Stable identities and positions
 
 `SpaceID` identifies content; `SpacePosition(row:column:)` identifies a zero-based grid cell. Moving a space does not change its ID. Supply a business identifier such as `SpaceID("inbox")`, or let the initializer generate a UUID. Dense grids seed IDs such as `r0c1`; those strings describe their initial positions only. Use `model.position(of:)` for their current positions.

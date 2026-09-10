@@ -69,16 +69,40 @@ public struct InfoSpaceWorkspace<Canvas: View>: View {
     }
 
     public var body: some View {
-        VStack(spacing: spacing) {
-            regions.top
-            HStack(spacing: spacing) {
-                regions.leading
-                canvas
-                regions.trailing
+        WorkspaceViewport {
+            VStack(spacing: spacing) {
+                regions.top
+                HStack(spacing: spacing) {
+                    regions.leading
+                    canvas
+                    regions.trailing
+                }
+                regions.bottom
             }
-            regions.bottom
         }
         .padding(padding)
         .background(style.theme.background)
+    }
+}
+
+/// The canvas fills its host's viewport. Speculative ancestor measurements must
+/// not repeatedly measure all regions and scrolling panel content to size it.
+private struct WorkspaceViewport: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func explicitAlignment(
+        of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout ()
+    ) -> CGFloat? { nil }
+
+    func explicitAlignment(
+        of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout ()
+    ) -> CGFloat? { nil }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(bounds.size))
     }
 }
