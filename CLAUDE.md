@@ -59,3 +59,17 @@ capture failure. Frames remained fixed and drag previews/commits were correct.
 Keep both failed reports under .local/warp-surface/sdk-accessibility-native-{1,2};
 do not describe those complete runs as passed. No drag or geometry code changed
 in this increment; consumer-mounted dragging is validated separately.
+
+The September 11 lifecycle increment keeps hidden panel content at its last
+visible viewport, preserving editor identity without reflowing long lists into
+a banner. Visible dragging still updates the viewport. Canvas placement does
+not recursively measure its children for unused alignment guides.
+
+Validation passed lint, 58 Swift tests in eight suites, examples, Release and
+the native Debug build. Native window runs content-viewport-native-{2,3} each
+passed 62/62 checks and every capture, including five hidden-content viewport
+and identity checks. The regular runner now requests foreground activation for
+its dedicated PID; input checks still assert an active key window and actual
+effects. The earlier timeout in content-viewport-native remains preserved.
+Private evidence is under .local/workspace-audit. The third run's 64-panel
+geometry projection averaged 122.6 microseconds, excluding rendering.

@@ -35,6 +35,32 @@ extension InspectionSession {
         checks["host-content-updates-without-layout-revision"] = probe.displayedTitles == ["Updated host content"]
         diagnostics["content-constructions-before-drag"] = String(before)
         diagnostics["content-constructions-after-host-update"] = String(probe.constructions)
+        await inspectHiddenContent(sample, probe: probe)
+    }
+
+    private func inspectHiddenContent(_ model: InfoSpaceModel, probe: CanvasIsolationProbe) async {
+        let first = SpaceID(row: 0, column: 0)
+        let initial = probe.frames[first]
+        let identity = probe.identities[first]
+        let appearances = probe.appearances[first]
+        model.minimize(first)
+        await settle(300)
+        checks["minimized-content-keeps-visible-viewport"] = initial != nil && probe.frames[first] == initial
+        checks["minimized-content-keeps-mount-identity"] =
+            identity != nil && probe.identities[first] == identity
+            && probe.appearances[first] == appearances
+        model.restore(first)
+        await settle(300)
+        let restored = probe.frames[first]
+        checks["restored-content-recovers-viewport"] = restored == initial
+        model.maximize(SpaceID(row: 0, column: 1))
+        await settle(300)
+        checks["shelved-content-keeps-visible-viewport"] = restored != nil && probe.frames[first] == restored
+        model.restoreAll()
+        await settle(300)
+        checks["restored-content-keeps-mount-identity"] =
+            probe.identities[first] == identity
+            && probe.appearances[first] == appearances
     }
 }
 
@@ -43,6 +69,8 @@ extension InspectionSession {
     @ObservationIgnored var constructions = 0
     @ObservationIgnored var frames: [SpaceID: CGRect] = [:]
     @ObservationIgnored var displayedTitles: Set<String> = []
+    @ObservationIgnored var identities: [SpaceID: UUID] = [:]
+    @ObservationIgnored var appearances: [SpaceID: Int] = [:]
 }
 
 private struct CanvasIsolationView: View {
@@ -60,6 +88,7 @@ private struct CanvasIsolationContent: View {
     let id: SpaceID
     let title: String
     let probe: CanvasIsolationProbe
+    @State private var identity = UUID()
 
     init(id: SpaceID, title: String, probe: CanvasIsolationProbe) {
         self.id = id
@@ -76,6 +105,10 @@ private struct CanvasIsolationContent: View {
                 probe.frames[id] = $0
             }
             .onChange(of: title, initial: true) { _, value in probe.displayedTitles = [value] }
+            .onAppear {
+                probe.identities[id] = identity
+                probe.appearances[id, default: 0] += 1
+            }
     }
 }
 #endif

@@ -82,6 +82,18 @@ private struct InfoSpacePlacementLayout: Layout {
         proposal.replacingUnspecifiedDimensions()
     }
 
+    // The canvas has no content alignment guides to export. Default alignment
+    // discovery would place every Panel during speculative ancestor sizing.
+    func explicitAlignment(
+        of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout ()
+    ) -> CGFloat? { nil }
+
+    func explicitAlignment(
+        of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout ()
+    ) -> CGFloat? { nil }
+
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let frames = Dictionary(uniqueKeysWithValues: placements.map { ($0.space, $0.frame) })
         for subview in subviews {

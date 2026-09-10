@@ -35,14 +35,14 @@ struct SpacePanel<Content: View>: View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: cornerRadius).fill(appearance.background)
             // Always mounted: local editors and scroll state survive moves and presentation changes.
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(size.width < 220 ? style.compactContentPadding : style.contentPadding)
-                .padding(.top, max(0, style.headerHeight - style.contentHeaderOverlap))
-                .opacity(showsContent ? 1 : 0)
-                .allowsHitTesting(showsContent)
-                .disabled(!showsContent)
-                .accessibilityHidden(!showsContent)
+            SpacePanelContentLayout(isVisible: showsContent, style: style) {
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .opacity(showsContent ? 1 : 0)
+            .allowsHitTesting(showsContent)
+            .disabled(!showsContent)
+            .accessibilityHidden(!showsContent)
             if isBanner, let bannerContent {
                 bannerContent(SpaceBannerContext(space: space, appearance: appearance, restore: restore))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -213,5 +213,51 @@ struct SpacePanel<Content: View>: View {
                 title
             )
             .accessibilityIdentifier("\(id)-\(space.id)")
+    }
+}
+
+/// Keep hidden editors mounted at their last visible viewport. Reflowing their
+/// long lists into a narrow banner does work the user cannot see.
+private struct SpacePanelContentLayout: Layout {
+    let isVisible: Bool
+    let minimumSize: CGSize
+    let contentPadding: CGFloat
+    let compactContentPadding: CGFloat
+    let headerInset: CGFloat
+
+    init(isVisible: Bool, style: SpacePanelStyle) {
+        self.isVisible = isVisible
+        minimumSize = style.minimumContentSize
+        contentPadding = style.contentPadding
+        compactContentPadding = style.compactContentPadding
+        headerInset = max(0, style.headerHeight - style.contentHeaderOverlap)
+    }
+
+    func makeCache(subviews: Subviews) -> CGSize? { nil }
+    func updateCache(_ cache: inout CGSize?, subviews: Subviews) {}
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout CGSize?) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func explicitAlignment(
+        of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout CGSize?
+    ) -> CGFloat? { nil }
+
+    func explicitAlignment(
+        of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+        subviews: Subviews, cache: inout CGSize?
+    ) -> CGFloat? { nil }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout CGSize?) {
+        if isVisible { cache = bounds.size }
+        let size = cache ?? minimumSize
+        let padding = size.width < 220 ? compactContentPadding : contentPadding
+        subviews.first?.place(
+            at: CGPoint(x: bounds.minX + padding, y: bounds.minY + padding + headerInset), anchor: .topLeading,
+            proposal: .init(
+                width: max(0, size.width - padding * 2), height: max(0, size.height - padding * 2 - headerInset))
+        )
     }
 }

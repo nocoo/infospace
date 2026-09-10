@@ -27,6 +27,15 @@ def main() -> int:
     with (output / "app.log").open("w") as log:
         process = subprocess.Popen([str(app), f"--inspect={output}"], stdout=log, stderr=subprocess.STDOUT)
         try:
+            time.sleep(0.4)
+            activation = subprocess.run([
+                "osascript", "-e", 'tell application "System Events" to set frontmost of first '
+                'application process whose unix id is ' + str(process.pid) + ' to true',
+            ], capture_output=True, timeout=3)
+            (output / "activation.json").write_text(json.dumps({
+                "pid": process.pid, "requested": activation.returncode == 0,
+                "method": "System Events foreground request; native checks still require an active key window",
+            }, indent=2) + "\n")
             deadline = time.monotonic() + 60
             while time.monotonic() < deadline:
                 if report_file.exists():
