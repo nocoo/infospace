@@ -166,6 +166,7 @@ SDK 没有第三方运行时依赖。
 - [使用示例](Examples)：独立网格、自定义工作区与原生窗口。
 - [贡献指南](CONTRIBUTING.md)：开发、检查与发布步骤。
 - [变更记录](CHANGELOG.md)：各版本的改动。
+- [Video production archive](docs/VIDEO.md): reproducible source, provenance and verified media.
 
 ## 许可证
 
