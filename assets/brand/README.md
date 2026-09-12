@@ -2,7 +2,7 @@
 
 The logo is a compact metal information tray with adjustable dividers and four colored paper stacks. It reflects the SDK's resizable information panels. The artwork uses continuous metal and paper materials.
 
-The owner approved the untouched native 2048 × 2048 GPT Image 2 image on 2026-09-09 and authorized full replacement. [The Hexly study](https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/infospace/2026-09-09-01) preserves the exact generation, prompt, references, decision, measured extraction, palette and finishing `01`. The previous `logo.svg` remains as historical artwork.
+The owner approved the untouched native 2048 × 2048 GPT Image 2 image on 2026-09-09 and authorized full replacement. [The Hexly study](https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/infospace/2026-09-09-01) preserves the exact generation, prompt, references, decision, measured extraction, palette and finishing `01`. The previous `logo.svg` is retained in git history.
 
 ## Asset roles
 

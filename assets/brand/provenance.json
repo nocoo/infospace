@@ -44,6 +44,6 @@
   "previous": {
     "path": "logo.svg",
     "sha256": "7540789c41a74c8553af6fe38b23aa3784753259038ff93dc8e7797f17582d03",
-    "usage": "Historical source; active consumers use the selected bitmap identity."
+    "usage": "Removed; retained in git history. Active consumers use the selected bitmap identity."
   }
 }
