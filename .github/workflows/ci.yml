@@ -10,25 +10,19 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   check:
-    runs-on: macos-26
-    timeout-minutes: 20
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install development tools
-        run: |
-          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
-          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-          swiftlint version
-          xcrun swift-format --version
-      - name: Lint, unit tests, consumer examples and Release build
-        run: ./scripts/check.sh
-      - name: Build native demo bundle
-        run: ./scripts/build.sh -quiet
+    uses: nocoo/base-ci/.github/workflows/test-job.yml@ab52d72877d386c9a8fd224e9ac868e88be90539
+    with:
+      runner: "macos-26"
+      runtime: "none"
+      timeout-minutes: 20
+      pre-command: |
+        if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
+        if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+        swiftlint version
+        xcrun swift-format --version
+      command: |
+        ./scripts/check.sh
+        ./scripts/build.sh -quiet
+      env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
