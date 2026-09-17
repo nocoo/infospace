@@ -1,83 +1,85 @@
-# InfoSpace development
+# InfoSpace
 
-Follow [CONTRIBUTING.md](CONTRIBUTING.md) for the SDK boundaries and validation.
+Native SwiftUI workspace SDK and demo for resizable information panels.
+Profile: native-hybrid.
+Direction: [SDK API](docs/API.md). Frameworks must preserve this handbook.
 
-The repository owner requested direct development on main on 2026-09-09.
-Make future SDK changes on main, commit coherent increments and push completed
-changes to origin/main. Do not create a feature branch or a separate worktree
-unless the owner asks for one. Existing feature work may be merged into main.
-Preserve unrelated work and use normal pushes; never force-push shared history.
+## Sources of Truth
 
-Use this repository's personal Git identity and GitHub account. Consumer
-repositories may use a different account; do not change global credentials or
-carry their identity into this public SDK.
+This file is the quality contract; hooks, CI and config are enforcement. Close implementation gaps without lowering the contract. Historical test results are not evidence of a current passing run.
 
-Keep InfoSpace generic: layout rules, spans, protected spaces, presentation
-lifecycle and host commit/appearance hooks belong here. Product modules, service
-APIs, account data and application-specific Agent behavior belong to consumers.
-Consumers should pin a tested, committed SDK revision.
+| Fact | Where |
+|---|---|
+| Human / SDK docs | [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Version | metadata-only `package.json`; `project.yml` mirrors app version |
+| Toolchain / enforcement | `Package.swift`, `.swiftlint.yml`, `.github/workflows/ci.yml`, `scripts/check.sh` |
+| Historical validation | [development records](docs/01-development-validation.md) |
+| Accidents | [Retrospective.md](Retrospective.md) |
+| Machine workflow | global `AGENTS.md` and Git rules |
 
-Run scripts/check.sh and compile the example and native demo after SDK changes.
-UI changes also require the dedicated native window checks in CONTRIBUTING.md.
-Record actual validation results; generated native probes are not Accessibility
-E2E or a measurement of all SwiftUI rendering performance.
+## Project Invariants
 
-Host language integration uses `InfoSpaceLocalization` and typed `InfoSpaceText`
-in the UI target. Keep built-in text behind that environment hook. The host owns
-its catalog, language preference and observation; the SDK keeps English defaults
-and never translates custom content or stores language in layout state.
+- Keep layout, spans, protected spaces and host lifecycle/appearance hooks generic; consumer APIs, account data and application agent behavior stay outside the SDK.
+- Preserve panel/editor identity. Consumers pin tested committed revisions; use `resizeGrid` to retain user panels, while demo-only `setDimensions` may drop out-of-bounds content.
+- Localize built-in text through `InfoSpaceLocalization` and typed `InfoSpaceText`; English defaults, custom content and host-owned language storage remain separate from layout state.
+- Observe continuous drag at canvas geometry level without rebuilding consumer factories. Keep live resizing, hidden content's last visible viewport and the outer viewport sizing boundary.
+- Preserve explicit accessibility containers so enclosing identifiers do not replace child action identifiers.
+- Use the personal Git identity and normal pushes. The owner's main-branch workflow remains the default; this audit explicitly permits isolated worktrees.
 
-On 2026-09-09 the owner paused automated tests during consumer manual validation.
-The localization hook compiled with both `InfoSpaceExamples` and the `InfoSpace`
-executable in Release (4.00 s and 1.22 s). `scripts/check.sh` and native window
-validation remain deferred until automation is resumed. No application was
-launched or activated for these builds.
+## Stack / Layout
 
-On 2026-09-10 automation was resumed. Continuous drag observation now ends at
-the canvas geometry layer; consumer factories do not rebuild for each pointer
-tick, while live resizing and host content updates remain enabled. Layout
-controls expose generic metrics, button-style and visibility/policy options.
-See docs/API.md and the compiled CustomizedWorkspaceExample.
+| Lane | Location / choice |
+|---|---|
+| Layout logic | `Sources/InfoSpaceCore`, Swift 6.3 |
+| SwiftUI / demo | `Sources/InfoSpaceUI`, `App`, macOS 26+ |
+| Consumers / tests | `Examples`, `Tests/InfoSpaceCoreTests` |
+| Tooling | Xcode 26.6+, XcodeGen 2.46+, SwiftLint, Python 3; no JS dependencies |
 
-Validation: scripts/check.sh passed lint, 58 Swift tests, the examples and the
-Release build. scripts/build.sh -quiet passed. The dedicated native run passed
-56/56 checks and all 19 captures, including host-content isolation, live geometry,
-editor retention and styled native layout controls. Its 64-panel geometry-only
-projection averaged 123.3 microseconds; this is not a rendering FPS measurement.
-Private evidence is retained under .local/warp-surface/sdk-native-1.
+## Commands
 
-The layout-controls group and dimension groups are explicit accessibility
-containers. An enclosing host group that has an identifier must also contain
-its children; otherwise SwiftUI can propagate that identifier into all buttons.
-The native control-style inspection verifies all seven real action identifiers.
+Run at repository root with full Xcode selected by `DEVELOPER_DIR`. Install SwiftLint/XcodeGen using Homebrew. Do not install Node dependencies for the metadata package.
 
-This accessibility increment passed scripts/check.sh (58 tests, examples and
-Release), the Debug build, and the added identifier/control-style assertions in
-both native attempts. The complete native runs were 56/57 and 55/57: foreground
-loss invalidated a drag in each, and the second also had one ScreenCaptureKit
-capture failure. Frames remained fixed and drag previews/commits were correct.
-Keep both failed reports under .local/warp-surface/sdk-accessibility-native-{1,2};
-do not describe those complete runs as passed. No drag or geometry code changed
-in this increment; consumer-mounted dragging is validated separately.
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+./scripts/lint.sh
+swift test -Xswiftc -warnings-as-errors
+swift build --target InfoSpaceExamples -Xswiftc -warnings-as-errors
+./scripts/check.sh
+./scripts/build.sh -quiet
+python3 scripts/verify-ui.py  # dedicated native window, logged-in desktop
+```
 
-The September 11 lifecycle increment keeps hidden panel content at its last
-visible viewport, preserving editor identity without reflowing long lists into
-a banner. Visible dragging still updates the viewport. Canvas placement does
-not recursively measure its children for unused alignment guides.
+## Verification
 
-Validation passed lint, 58 Swift tests in eight suites, examples, Release and
-the native Debug build. Native window runs content-viewport-native-{2,3} each
-passed 62/62 checks and every capture, including five hidden-content viewport
-and identity checks. The regular runner now requests foreground activation for
-its dedicated PID; input checks still assert an active key window and actual
-effects. The earlier timeout in content-viewport-native remains preserved.
-Private evidence is under .local/workspace-audit. The third run's 64-panel
-geometry projection averaged 122.6 microseconds, excluding rendering.
+6DQ = L1/L2/L3 + G1/G2 + D1 (test isolation). Status: `enforced`, `planned`, `manual`, or `N/A`; partial enforcement below does not certify the full required bar.
+L1 requires statements, branches, functions and lines each ≥95%, with no skipped/focused tests; preserve any stricter package threshold. Native tools must identify unmeasured metrics as gaps.
+G1 requires check-only strict analysis/formatting with zero errors/warnings. G2 requires dependency and secret scans, with missing required scanners failing.
 
-The outer workspace also uses a viewport sizing boundary, so speculative parent
-size/alignment queries do not descend into every region and panel. Actual
-placement retains ordinary region sizing. This increment passed lint, all
-58 tests/eight suites, examples, Release/Debug builds and 62/62 native checks
-with every capture in .local/workspace-audit/workspace-viewport-native. Footer
-geometry, live resizing, editor identity and hidden viewports remain covered.
-The 122.2-microsecond geometry projection still excludes consumer rendering.
+| Dimension | Status | Required proof and current evidence/gap |
+|---|---|---|
+| L1 Swift | planned | CI runs Swift tests; there is no four-metric ≥95% coverage gate. |
+| L2 SDK integration | planned | Consumer examples compile in CI; no HTTP API applies, and compilation alone does not prove host integration behavior. |
+| L3 native UI | manual | `verify-ui.py` checks real native events/captures; CI does not run desktop inspection. |
+| G1 Swift | enforced | CI → `check.sh` → strict SwiftLint, strict swift-format and compiler warnings-as-errors. |
+| G2 | planned | No secret/dependency scanning job; no third-party Swift runtime dependencies, but secret scanning still applies. |
+| D1 | manual | Inspection owns a dedicated PID/window and private reports; require its active key window before sending input. |
+
+No local Git hooks are installed. CI uses the shared base-ci test job on macOS 26/Xcode 26.6 for `check.sh` and the native build.
+
+Target hooks: pre-commit checks G1 + L1 against the index snapshot (`git checkout-index`) in <30s; pre-push checks L2 and G2 in parallel against every stdin push ref/commit in <3min, plus build where applicable. L3 runs in CI or an explicit manual lane.
+Never bypass commit/push hooks, force-push, or use autofix in checks. Documentation changes do not authorize deploying or implementing new gates.
+
+## Resources / Isolation
+
+UI inspection requires an unlocked desktop and only targets its own PID/window. Keep reports in ignored `.local/inspections/`; never touch consumer account data. Geometry projections exclude SwiftUI rendering and are not FPS or Accessibility E2E measurements.
+
+## Operations / Release
+
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for version sync, changelog, builds and authorized main/tag/release publication. Releases distribute the Swift package/source; do not imply a signed/notarized demo download. Historical test evidence remains in [development records](docs/01-development-validation.md).
+
+## Retrospective
+
+Move accident narratives to [Retrospective.md](Retrospective.md); keep at most about ten concise recurring project rules here. Put architecture and operational detail in linked docs.
+
+- Report complete native-run failures honestly even when new assertions passed.
+- Preserve editor identity, hidden viewport sizes and action identifiers.
