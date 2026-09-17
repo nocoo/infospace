@@ -1,5 +1,6 @@
 .build/
 .swiftpm/
 *.xcodeproj/
+App/Info.plist
 .DS_Store
 .local/
