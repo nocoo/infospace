@@ -1,5 +1,3 @@
-import Foundation
-
 /// A panel's occupied cells. Full-axis spans grow with the grid and start at its edge.
 public enum SpaceSpan: Codable, Equatable, Sendable {
     case cell

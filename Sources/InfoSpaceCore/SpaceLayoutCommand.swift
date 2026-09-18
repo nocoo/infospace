@@ -1,5 +1,3 @@
-import Foundation
-
 public enum SpaceInsertionPolicy: String, Codable, Sendable {
     case shiftForward
     case reject

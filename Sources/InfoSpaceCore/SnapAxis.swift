@@ -1,5 +1,3 @@
-import Foundation
-
 /// Committed positions are integer grid ticks; drag previews may use fractional ticks.
 public struct SnapAxis: Codable, Equatable, Sendable {
     public static let resolution = 32

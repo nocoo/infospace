@@ -1,5 +1,3 @@
-import Foundation
-
 /// Persistable committed state. Drag previews and host content are deliberately excluded.
 public struct SpaceSnapshot: Codable, Equatable, Sendable {
     public let version: Int

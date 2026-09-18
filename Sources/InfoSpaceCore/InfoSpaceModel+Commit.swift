@@ -1,5 +1,3 @@
-import Foundation
-
 extension InfoSpaceModel {
     /// With a handler installed, the host owns commits. The canvas stays at its last accepted revision
     /// until the host validates/persists the command and calls `install`. A preview is never persisted.
