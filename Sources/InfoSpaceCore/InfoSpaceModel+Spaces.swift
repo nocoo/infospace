@@ -1,5 +1,3 @@
-import Foundation
-
 extension InfoSpaceModel {
     @discardableResult
     public func insertSpace(

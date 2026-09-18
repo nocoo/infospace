@@ -1,5 +1,3 @@
-import Foundation
-
 public struct DividerTarget: Codable, Hashable, Sendable {
     public let column: Int?
     public let row: Int?
