@@ -1,6 +1,6 @@
 # SDK 开发与验证记录
 
-Detailed project constraints and procedures. The root [CLAUDE.md](../CLAUDE.md) defines the quality contract and records current enforcement gaps.
+Detailed project constraints and procedures. The root [AGENTS.md](../AGENTS.md) defines the quality contract and records current enforcement gaps.
 
 On 2026-09-09 the owner paused automated tests during consumer manual validation.
 The localization hook compiled with both `InfoSpaceExamples` and the `InfoSpace`
