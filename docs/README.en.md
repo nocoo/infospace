@@ -102,7 +102,7 @@ The build script generates the Xcode project and writes the Debug app to `.build
 | `./scripts/format.sh` | Format Swift code |
 | `./scripts/lint.sh` | Run SwiftLint and swift-format checks |
 | `./scripts/check.sh` | Run local checks, unit tests, example compilation and a Release package build |
-| `python3 scripts/demo.py` | Play a one-minute product walkthrough; waits 10 seconds first and never resizes the window |
+| `./scripts/run.sh --demo` | Play a one-minute product walkthrough; waits 10 seconds first and never resizes the window |
 
 ```text
 Sources/InfoSpaceCore/       Layout, stable IDs, proportions and snapping
@@ -140,7 +140,7 @@ A product walkthrough uses the same Debug app. The window waits 10 seconds so re
 
 ```bash
 ./scripts/build.sh -quiet
-python3 scripts/demo.py
+./scripts/run.sh --demo
 ```
 
 ## Stack

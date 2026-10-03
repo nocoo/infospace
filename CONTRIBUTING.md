@@ -22,7 +22,7 @@ python3 scripts/verify-ui.py
 
 The runner launches a dedicated demo process, requests foreground activation for that PID through System Events, sends native events only to its own window and captures that window with ScreenCaptureKit. Activation requests are recorded separately; the native checks still require an active key window. It intercepts link opening within that inspection process. Reports and screenshots stay in `.local/inspections/` and are excluded from Git. CI does not run this desktop inspection. Its geometry timing excludes SwiftUI layout and rendering.
 
-`python3 scripts/demo.py` plays a one-minute walkthrough of the same window. It waits 10 seconds before moving, then keeps the window size fixed for recording.
+`./scripts/run.sh --demo` plays a one-minute walkthrough of the same window. It waits 10 seconds before moving, then keeps the window size fixed for recording.
 
 Include a short description of the changed behavior and the checks you ran in your pull request. For visual changes, a screenshot or recording is useful. Contributions are provided under the project's [MIT license](LICENSE).
 
