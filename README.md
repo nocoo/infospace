@@ -102,7 +102,7 @@ brew install xcodegen swiftlint
 | `./scripts/format.sh` | 格式化 Swift 代码 |
 | `./scripts/lint.sh` | 运行 SwiftLint 与 swift-format 检查 |
 | `./scripts/check.sh` | 运行本地检查、单元测试、示例编译与 Release 包构建 |
-| `python3 scripts/demo.py` | 启动一分钟产品演示；开始前暂停 10 秒，过程中不改变窗口尺寸 |
+| `./scripts/run.sh --demo` | 启动一分钟产品演示；开始前暂停 10 秒，过程中不改变窗口尺寸 |
 
 ```text
 Sources/InfoSpaceCore/       布局、稳定 ID、比例与吸附
@@ -140,7 +140,7 @@ python3 scripts/verify-ui.py
 
 ```bash
 ./scripts/build.sh -quiet
-python3 scripts/demo.py
+./scripts/run.sh --demo
 ```
 
 ## 技术栈
