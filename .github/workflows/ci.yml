@@ -1,3 +1,5 @@
+# CI slot standard v1 (nocoo/base-ci docs/slots.md): canonical names via caller job `quality` + ci-quality-slots.yml;
+# native Swift commands inlined (not nocoo/base-ci quality.yml). base-ci v2026.12 for actions only.
 name: CI
 
 on:
@@ -11,18 +13,5 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    uses: nocoo/base-ci/.github/workflows/test-job.yml@633a5545fcfec91b688840650d4edf3e9cc1abbd # v2026.10
-    with:
-      runner: "macos-26"
-      runtime: "none"
-      timeout-minutes: 20
-      pre-command: |
-        if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
-        if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-        swiftlint version
-        xcrun swift-format --version
-      command: |
-        ./scripts/check.sh
-        ./scripts/build.sh -quiet
-      env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
+  quality:
+    uses: ./.github/workflows/ci-quality-slots.yml
