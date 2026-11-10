@@ -1,3 +1,5 @@
+# CI slot standard v1 (nocoo/base-ci docs/slots.md): impl S1, S2, S3, G1, B1, L1, Z1 via test-job / workflow-lint / security;
+# na G2, L1.5, L2, L3, P1（见 PR 槽位表）。无法用 quality.yml：纯 Swift/macOS 工具链，无 JS lockfile。nocoo/base-ci v2026.12.
 name: CI
 
 on:
@@ -11,11 +13,28 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    uses: nocoo/base-ci/.github/workflows/test-job.yml@633a5545fcfec91b688840650d4edf3e9cc1abbd # v2026.10
+  s3-workflow-lint:
+    name: S3: Workflow Lint
+    uses: nocoo/base-ci/.github/workflows/workflow-lint.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
     with:
-      runner: "macos-26"
-      runtime: "none"
+      yamllint: true
+      required-reusable-workflow: nocoo/base-ci/.github/workflows/test-job.yml
+
+  g1-secret-scan:
+    name: G1: Secret Scan
+    uses: nocoo/base-ci/.github/workflows/security.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
+    with:
+      package-manager: none
+      scan-secrets: true
+      scan-dependencies: false
+
+  s1-typecheck:
+    name: S1: Typecheck
+    uses: nocoo/base-ci/.github/workflows/test-job.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
+    with:
+      slot-label: "S1: Typecheck"
+      runner: macos-26
+      runtime: none
       timeout-minutes: 20
       pre-command: |
         if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
@@ -23,6 +42,102 @@ jobs:
         swiftlint version
         xcrun swift-format --version
       command: |
-        ./scripts/check.sh
-        ./scripts/build.sh -quiet
+        python3 scripts/version.py
+        swift build -Xswiftc -warnings-as-errors
       env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
+
+  s2-lint:
+    name: S2: Lint
+    uses: nocoo/base-ci/.github/workflows/test-job.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
+    with:
+      slot-label: "S2: Lint"
+      runner: macos-26
+      runtime: none
+      timeout-minutes: 20
+      pre-command: |
+        if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
+        if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+        swiftlint version
+        xcrun swift-format --version
+      command: ./scripts/lint.sh
+      env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
+
+  l1-unit-tests:
+    name: L1: Unit Tests & Coverage
+    uses: nocoo/base-ci/.github/workflows/test-job.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
+    with:
+      slot-label: "L1: Unit Tests & Coverage"
+      runner: macos-26
+      runtime: none
+      timeout-minutes: 20
+      pre-command: |
+        if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
+        if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+        swiftlint version
+        xcrun swift-format --version
+      command: |
+        swift test -Xswiftc -warnings-as-errors
+        swift build --target InfoSpaceExamples -Xswiftc -warnings-as-errors
+      env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
+
+  b1-build:
+    name: B1: Build
+    uses: nocoo/base-ci/.github/workflows/test-job.yml@1ea10ecab22b72512399485391603fe03a161016 # v2026.12
+    with:
+      slot-label: "B1: Build"
+      runner: macos-26
+      runtime: none
+      timeout-minutes: 20
+      pre-command: |
+        if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
+        if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+        swiftlint version
+        xcrun swift-format --version
+      command: |
+        ./scripts/build.sh -quiet
+        swift build --configuration release -Xswiftc -warnings-as-errors
+      env-json: '{"DEVELOPER_DIR": "/Applications/Xcode_26.6.app/Contents/Developer"}'
+
+  z1-gate:
+    name: Z1: Gate
+    needs:
+      - s3-workflow-lint
+      - g1-secret-scan
+      - s1-typecheck
+      - s2-lint
+      - l1-unit-tests
+      - b1-build
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Z1: Require every implemented slot job on this commit
+        env:
+          S3_RESULT: ${{ needs.s3-workflow-lint.result }}
+          G1_RESULT: ${{ needs.g1-secret-scan.result }}
+          S1_RESULT: ${{ needs.s1-typecheck.result }}
+          S2_RESULT: ${{ needs.s2-lint.result }}
+          L1_RESULT: ${{ needs.l1-unit-tests.result }}
+          B1_RESULT: ${{ needs.b1-build.result }}
+          S3_SHA: ${{ needs.s3-workflow-lint.outputs.tested-sha }}
+          G1_SHA: ${{ needs.g1-secret-scan.outputs.tested-sha }}
+          S1_SHA: ${{ needs.s1-typecheck.outputs.tested-sha }}
+          S2_SHA: ${{ needs.s2-lint.outputs.tested-sha }}
+          L1_SHA: ${{ needs.l1-unit-tests.outputs.tested-sha }}
+          B1_SHA: ${{ needs.b1-build.outputs.tested-sha }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for result in "$S3_RESULT" "$G1_RESULT" "$S1_RESULT" "$S2_RESULT" "$L1_RESULT" "$B1_RESULT"; do
+            if [ "$result" != success ]; then
+              echo "::error::Z1: Gate — slot job result was '$result' (expected success)."
+              exit 1
+            fi
+          done
+          for sha in "$S3_SHA" "$G1_SHA" "$S1_SHA" "$S2_SHA" "$L1_SHA" "$B1_SHA"; do
+            if [ "$sha" != "$EXPECTED_SHA" ]; then
+              echo "::error::Z1: Gate — tested-sha mismatch (got '$sha', expected '$EXPECTED_SHA')."
+              exit 1
+            fi
+          done
+          echo "Z1: Gate — all implemented slots succeeded on $EXPECTED_SHA"
