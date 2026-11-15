@@ -35,21 +35,24 @@ python3 scripts/verify-ui.py  # dedicated native window, logged-in desktop
 
 ## Testing and quality contract
 
-6DQ keeps its name with unified L1, L2/L3, G2 and D1; the owner merged former G1 into L1 on 2026-09-21. Statuses: `enforced`, `planned`, `manual`, or `N/A`; partial enforcement below does not certify the full required bar.
-Unified L1 requires statements, branches, functions and lines each ≥95%, with no skipped/focused tests; strict check-only types and lint/format with zero errors/warnings; installed hooks and failure rejection. Preserve any stricter package threshold. Native tools must identify unmeasured metrics as gaps.
-G2 requires dependency and secret scans, with missing required scanners failing.
+Quality follows `system1-quality` (12 slots `S1..Z1` in `.github/workflows/quality-slots.yml`, `nocoo/base-ci v2026.15` for pinned actions). Statuses: `impl`, `na`, `manual`, or `planned`.
 
-| Dimension | Status | Required proof and current evidence/gap |
-|---|---|---|
-| L1 Swift | planned | CI runs Swift tests; there is no four-metric ≥95% coverage gate. The strict static subchecks are enforced: CI → `check.sh` → strict SwiftLint, strict swift-format and compiler warnings-as-errors. |
-| L2 SDK integration | planned | Consumer examples compile in CI; no HTTP API applies, and compilation alone does not prove host integration behavior. |
-| L3 native UI | manual | `verify-ui.py` checks real native events/captures; CI does not run desktop inspection. |
-| G2 | planned | No secret/dependency scanning job; no third-party Swift runtime dependencies, but secret scanning still applies. |
-| D1 | manual | Inspection owns a dedicated PID/window and private reports; require its active key window before sending input. |
+| Slot | Status | Implementation / Evidence |
+| --- | --- | --- |
+| S1: Typecheck | impl | `python3 scripts/version.py` and `swift build -Xswiftc -warnings-as-errors` |
+| S2: Lint | impl | `./scripts/lint.sh` (strict SwiftLint and strict swift-format) |
+| S3: Workflow Lint | impl | `actionlint`, immutable `nocoo/base-ci` SHA check, and `yamllint` |
+| G1: Secret Scan | impl | `gitleaks detect --no-banner --verbose --redact --no-git` |
+| G2: Dependency Vulnerabilities | na | No third-party Swift runtime dependencies or lockfile |
+| B1: Build | impl | `./scripts/build.sh -quiet` and `swift build --configuration release -Xswiftc -warnings-as-errors` |
+| L1: Unit Tests & Coverage | impl | `swift test -Xswiftc -warnings-as-errors` and `swift build --target InfoSpaceExamples -Xswiftc -warnings-as-errors` |
+| L2: Runtime | na | Native SwiftUI SDK; no separate worker runtime |
+| L3: Integration | na | No HTTP API integration suite |
+| L4: E2E | na (manual) | `python3 scripts/verify-ui.py` runs manually on an unlocked desktop |
+| P1: Package Check | na | Swift Package source, not published to npm |
+| Z1: Gate | impl | Aggregates all 11 slot outcomes and verifies `tested-sha` |
 
-No local Git hooks are installed. CI uses the shared base-ci test job on macOS 26/Xcode 26.6 for `check.sh` and the native build.
-
-Target hooks: pre-commit checks unified L1 against the index snapshot (`git checkout-index`) in <30s; pre-push checks L2 and G2 in parallel against every stdin push ref/commit in <3min, plus build where applicable. L3 runs in CI or an explicit manual lane.
+No local Git hooks are installed. CI runs all implemented native macOS slots via `.github/workflows/ci.yml` → `quality-slots.yml`.
 Never bypass commit/push hooks, force-push, or use autofix in checks. Documentation changes do not authorize deploying or implementing new gates.
 
 ## Resources and isolation
