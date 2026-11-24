@@ -18,15 +18,16 @@ jobs:
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - name: Prepare macOS toolchain
-        run: |
-          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
-          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-          swiftlint version
-          xcrun swift-format --version
+      - name: Cache SwiftPM build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: .build
+          key: ${{ runner.os }}-infospace-s1-${{ hashFiles('Package.swift', 'Sources/**', 'App/**', 'Examples/**', 'Tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-infospace-s1-
       - name: S1 typecheck
         run: |
           python3 scripts/version.py
@@ -44,14 +45,15 @@ jobs:
       tested-sha: ${{ steps.record-sha.outputs.sha }}
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Prepare macOS toolchain
         run: |
           if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
-          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
           swiftlint version
           xcrun swift-format --version
       - name: S2 lint
@@ -68,7 +70,7 @@ jobs:
     outputs:
       tested-sha: ${{ steps.record-sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Install verified actionlint
@@ -120,11 +122,11 @@ jobs:
     outputs:
       tested-sha: ${{ steps.record-sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Install security scanners
-        uses: nocoo/base-ci/.github/actions/setup-security-scanners@777bbe4f9bacab8a91d8c01974480a6ee23d28e0 # v2026.15
+        uses: nocoo/base-ci/.github/actions/setup-security-scanners@6424d395d36a815d931f10e557762eb635d511c0  # v2026.16
       - name: Gitleaks secret scan
         run: gitleaks detect --no-banner --verbose --redact --no-git
       - name: Record tested SHA
@@ -147,16 +149,23 @@ jobs:
       tested-sha: ${{ steps.record-sha.outputs.sha }}
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+      - name: Cache Swift and Xcode builds
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: .build
+          key: ${{ runner.os }}-infospace-b1-${{ hashFiles('Package.swift', 'project.yml', 'Sources/**', 'App/**') }}
+          restore-keys: |
+            ${{ runner.os }}-infospace-b1-
       - name: Prepare macOS toolchain
         run: |
-          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-          swiftlint version
-          xcrun swift-format --version
+          xcodegen --version
       - name: B1 build
         run: |
           ./scripts/build.sh -quiet
@@ -175,15 +184,16 @@ jobs:
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - name: Prepare macOS toolchain
-        run: |
-          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
-          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-          swiftlint version
-          xcrun swift-format --version
+      - name: Cache SwiftPM build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: .build
+          key: ${{ runner.os }}-infospace-l1-${{ hashFiles('Package.swift', 'Sources/**', 'Examples/**', 'Tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-infospace-l1-
       - name: L1 unit tests
         run: |
           swift test -Xswiftc -warnings-as-errors
