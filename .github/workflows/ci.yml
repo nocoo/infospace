@@ -1,5 +1,5 @@
 # CI slot standard v1.3.0 (system1-quality): canonical names via caller job `quality` + quality-slots.yml;
-# native Swift commands inlined (not nocoo/base-ci quality.yml). base-ci v2026.16 for actions only.
+# native Swift commands inlined (not nocoo/base-ci quality.yml). base-ci v2026.17 for actions only.
 name: CI
 
 on:
