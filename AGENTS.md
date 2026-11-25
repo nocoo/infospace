@@ -34,7 +34,7 @@ python3 scripts/verify-ui.py                                         # L4 manual
 
 Follows `system1-quality`; CI slot definitions and pinned `nocoo/base-ci` action revisions live in `.github/workflows/quality-slots.yml` (called by `.github/workflows/ci.yml`; `quality / Z1: Gate` required on `main`). Status vocabulary: `enforced`, `planned`, `manual`, `N/A`.
 
-- **Enforced in CI**: `S1`, `S2` (check-only, 0 warnings), `S3`, `G1`, `B1`, `L1` (`swift test` + `InfoSpaceExamples`; no coverage threshold), and `Z1: Gate` (`enforced`; checks all enabled slots and `tested-sha`).
+- **Enforced in CI**: `S1`, `S2` (check-only, 0 warnings), `S3`, `G1`, `B1` (Release `./scripts/build.sh -quiet` with cached `xcodegen`), `L1` (`swift test` + `InfoSpaceExamples`; no coverage threshold), and `Z1: Gate` (`enforced`; checks all enabled slots and `tested-sha`).
 - **Exceptions**: `G2` (no third-party Swift deps/lockfile), `L2` (no worker runtime), `L3` (no HTTP API), and `P1` (Swift source, not npm) are `N/A`; `L4` is `manual` on an unlocked desktop (`N/A` in CI).
 - **Local hooks**: `planned` (none installed); run `./scripts/check.sh` and `./scripts/build.sh -quiet` manually, never bypass gates, and never run autofix in checks (use `./scripts/format.sh` explicitly).
 
