@@ -5,7 +5,12 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 cd "$INFOSPACE_ROOT"
 INFOSPACE_CONFIGURATION="${INFOSPACE_BUILD_CONFIGURATION:-Debug}"
 python3 scripts/version.py
-xcodegen generate
+mkdir -p .build
+if [[ ! -f InfoSpace.xcodeproj/project.pbxproj || ! -f App/Info.plist ]]; then
+  rm -f .build/xcodegen.cache
+  xcodegen generate --only-plists
+fi
+xcodegen generate --use-cache --cache-path .build/xcodegen.cache
 xcodebuild -project InfoSpace.xcodeproj -scheme InfoSpace \
   -destination "platform=macOS,arch=$(uname -m)" -configuration "$INFOSPACE_CONFIGURATION" \
   -derivedDataPath .build/xcode CODE_SIGN_IDENTITY=- build "$@"
